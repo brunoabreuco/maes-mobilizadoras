@@ -19,7 +19,7 @@ def create_acao():
         acao_data = AcaoData(**req_data)
     except ValidationError as e:
         current_app.logger.exception(e)
-        return jsonify({"errors": e.errors()}), 400
+        return jsonify({"error": "; ".join(map(str, e.errors()))}), 400
 
     try:
         new_event = Event(**acao_data.model_dump())

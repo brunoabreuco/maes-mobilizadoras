@@ -79,10 +79,9 @@ def test_create_acao_no_title(client, base_data):
 
     assert response.status_code == 400
     data = response.get_json()
-    assert "errors" in data
-    # Check if title is mentioned in the validation errors
-    error_locs = [err["loc"][0] for err in data["errors"]]
-    assert "title" in error_locs
+    assert "error" in data
+    # Check if title is mentioned in the validation error
+    assert "title" in data["error"]
 
 
 def test_create_acao_invalid_date(client, base_data):
@@ -99,9 +98,8 @@ def test_create_acao_invalid_date(client, base_data):
 
     assert response.status_code == 400
     data = response.get_json()
-    assert "errors" in data
-    error_locs = [err["loc"][0] for err in data["errors"]]
-    assert "event_datetime" in error_locs
+    assert "error" in data
+    assert "event_datetime" in data["error"]
 
 
 def test_rate_limiting_carga(client, base_data):
