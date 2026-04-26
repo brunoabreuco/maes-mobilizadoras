@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Numeric, JSON
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Numeric, JSON, event
 
 db = SQLAlchemy()
 
@@ -20,6 +20,13 @@ class User(db.Model):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+    # Relationships
+    events_organized = db.relationship('Event', backref='organizer', lazy=True)
+    participations = db.relationship('EventParticipation', backref='user', lazy=True)
+    fcm_tokens = db.relationship('FCMToken', backref='user', lazy=True)
+    sync_queue_items = db.relationship('SyncQueue', backref='user', lazy=True)
+    notification_reads = db.relationship('NotificationRead', backref='user', lazy=True)
+
 class AuthOTP(db.Model):
     __tablename__ = 'auth_otp'
     id = Column(String(36), primary_key=True, default=generate_uuid)
@@ -36,6 +43,8 @@ class EventCategory(db.Model):
     name = Column(String(80), nullable=False)
     icon = Column(String(50), nullable=True)
     color = Column(String(7), nullable=True)
+    
+    events = db.relationship('Event', backref='category', lazy=True)
 
 class Event(db.Model):
     __tablename__ = 'events'
@@ -54,6 +63,10 @@ class Event(db.Model):
     cover_image_url = Column(Text, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    participations = db.relationship('EventParticipation', backref='event', lazy=True)
+    notifications = db.relationship('Notification', backref='event', lazy=True)
 
 class EventParticipation(db.Model):
     __tablename__ = 'event_participations'
@@ -76,6 +89,9 @@ class SyncQueue(db.Model):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     processed_at = Column(DateTime, nullable=True)
 
+    # Relationships
+    notifications_sent = db.relationship('Notification', backref='sender', lazy=True)
+
 class Notification(db.Model):
     __tablename__ = 'notifications'
     id = Column(String(36), primary_key=True, default=generate_uuid)
@@ -88,6 +104,9 @@ class Notification(db.Model):
     scheduled_at = Column(DateTime, nullable=True)
     sent_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    reads = db.relationship('NotificationRead', backref='notification', lazy=True)
 
 class NotificationRead(db.Model):
     __tablename__ = 'notification_reads'
@@ -104,3 +123,56 @@ class FCMToken(db.Model):
     is_active = Column(Boolean, default=True)
     last_used_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+# Automatically update participant_count in Event table
+@event.listens_for(EventParticipation, 'after_insert')
+def increment_participant_count(mapper, connection, target):
+    table = Event.__table__
+    connection.execute(
+        table.update()
+        .where(table.c.id == target.event_id)
+        .values(participant_count=table.c.participant_count + 1)
+    )
+
+@event.listens_for(EventParticipation, 'after_delete')
+def decrement_participant_count(mapper, connection, target):
+    table = Event.__table__
+    connection.execute(
+        table.update()
+        .where(table.c.id == target.event_id)
+        .values(participant_count=table.c.participant_count - 1)
+    )
+
+@event.listens_for(EventParticipation, 'before_update')
+def update_participant_count(mapper, connection, target):
+    state = db.inspect(target)
+    history = state.get_history('event_id', True)
+    
+    if history.has_changes():
+        table = Event.__table__
+        
+        old_event_id = history.deleted[0] if history.deleted else None
+        
+        # If the old value isn't loaded in the session, query it from the DB
+        if not old_event_id:
+            part_table = EventParticipation.__table__
+            row = connection.execute(
+                db.select(part_table.c.event_id).where(part_table.c.id == target.id)
+            ).first()
+            if row:
+                old_event_id = row[0]
+                
+        new_event_id = history.added[0] if history.added else None
+        
+        if old_event_id and old_event_id != new_event_id:
+            connection.execute(
+                table.update()
+                .where(table.c.id == old_event_id)
+                .values(participant_count=table.c.participant_count - 1)
+            )
+        if new_event_id and old_event_id != new_event_id:
+            connection.execute(
+                table.update()
+                .where(table.c.id == new_event_id)
+                .values(participant_count=table.c.participant_count + 1)
+            )
