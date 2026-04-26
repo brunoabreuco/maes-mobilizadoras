@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from pydantic import ValidationError
 
 from maes_mobilizadoras.limiter import limiter
@@ -18,13 +18,17 @@ def create_acao():
 
         acao_data = AcaoData(**req_data)
     except ValidationError as e:
+        current_app.logger.exception(e)
         return jsonify({"errors": e.errors()}), 400
 
-    new_event = Event(**acao_data.model_dump())
-
-    db.session.add(new_event)
-    db.session.commit()
-    db.session.refresh(new_event)
+    try:
+        new_event = Event(**acao_data.model_dump())
+        db.session.add(new_event)
+        db.session.commit()
+        db.session.refresh(new_event)
+    except Exception as e:
+        current_app.logger.exception(e)
+        return jsonify({"error": "Failed to reach database"})
 
     response_model = AcaoResponse(
         data=AcaoData.model_validate(new_event),
