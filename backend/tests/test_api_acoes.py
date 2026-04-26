@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timezone, timedelta
-from maes_mobilizadoras.models import db, User, EventCategory
+from maes_mobilizadoras.models import db, User, EventCategory, Event
 import app as main_app
 
 
@@ -61,8 +61,11 @@ def test_create_acao_success(client, base_data):
     assert "data" in data
     assert "metadata" in data
     assert data["data"]["title"] == "Ação Comunitária"
-    assert data["metadata"]["id"] is not None
+    new_id = data["metadata"]["id"]
+    assert new_id is not None
     assert data["metadata"]["participant_count"] == 0
+    event = db.session.get(Event, new_id)
+    assert event.participant_count == 0 and event.title == "Ação Comunitária"
 
 
 def test_create_acao_no_title(client, base_data):
