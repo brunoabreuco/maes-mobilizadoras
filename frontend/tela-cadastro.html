@@ -20,7 +20,7 @@
 
         <div class="conteiner-telefone">
             <label for="phone">Número de celular</label><br>
-            <input class="input-telefone" type="tel" id="phone" name="phone" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" placeholder="(11) 98765-4321"> 
+            <input class="input-telefone" type="tel" id="phone" name="phone" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" placeholder="(11) 98765-4321" required> 
         </div>
         <!--usar display block no css-->
         <button>Continuar</button>
@@ -42,6 +42,27 @@
             <input class="input-codigo" type="text" inputmode="numeric" maxlength="1" />
         </div>
         <button class="botao-reenviar">Reenviar código</button>
+    </section>
+
+    <section class="etapa04-nome-bairro">
+        <h1>Quase pronto!</h1>
+        <h2>Precisamos de algumas informações<br>básicas</h2>
+
+        <label for="name">Como você se chama? *</label>
+        <input id="name" type="text" name="name" placeholder="Digite seu nome completo" required>
+
+        <label for="neighborhood">Em qual bairro você mora? *</label>
+        <select name="neighborhood" required>
+            <option value="barragem">Barragem</option>
+            <option value="colonia">Colônia</option>
+            <option value="jardim-silveira">Jardim Silveira</option>
+            <option value="nova-america">Nova América</option>
+            <option value="sao-norberto">São Norberto</option>
+            <option value="vargem-grande">Vargem Grande</option>
+        </select>
+
+        <a href="#">Começar a usar</a>
+        <p>Suas informações ajudam a fortalecer a comunidade e <br>conectar você com eventos próximos</p>
     </section>
     
     <script src="js/script-tela-cadastro.js"></script>
