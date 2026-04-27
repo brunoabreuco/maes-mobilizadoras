@@ -34,7 +34,7 @@ h2 {
     text-align: center;
 }
 
-div {
+.conteiner-telefone {
     width: 350px;
     margin: 0px auto;
 }
@@ -46,12 +46,14 @@ label {
 input {
     background-color: var(--secondary-color);
     color: var(--text-quaternary-color);
-    width: 350px;
-    height: 52px;
     border-radius: 15px;
     border-color: transparent;
     font-size: 16px;
     font-weight: 600;
+}
+.input-telefone {
+    width: 350px;
+    height: 52px;
     margin: 4px auto 16px auto;
     padding-left: 19px; /* para espacamento no placeholder */
 }
@@ -78,4 +80,35 @@ p {
     font-size: 13px;
     font-weight: 400;
     text-align: center;
+}
+
+/*ETAPA02: Confirmacao por codigo SMS---------------------------------------------*/
+
+.etapa03-codigo-SMS {
+    padding: 164px 0px 327px 0px;
+}
+.etapa03-codigo-SMS h1 {
+    font-size: 36px;
+    margin-bottom: 15px;
+}
+.etapa03-codigo-SMS h2 {
+    margin-bottom: 45px;
+}
+.conteiner-codigo {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 33px;
+}
+.input-codigo {
+    width: 44px;
+    height: 52px;
+    text-align: center;
+}
+.botao-reenviar {
+    color: var(--text-secondary-color);
+    text-decoration: underline;
+    background-color: transparent;
+    width: auto; /*para englobar apenas o texto de dentro*/
 }

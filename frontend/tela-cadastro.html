@@ -18,9 +18,9 @@
         <h1>Bem-vindo(a)!</h1>
         <h2>Digite seu telefone para continuar</h2>
 
-        <div>
+        <div class="conteiner-telefone">
             <label for="phone">Número de celular</label><br>
-            <input type="tel" id="phone" name="phone" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" placeholder="(11) 98765-4321"> 
+            <input class="input-telefone" type="tel" id="phone" name="phone" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" placeholder="(11) 98765-4321"> 
         </div>
         <!--usar display block no css-->
         <button>Continuar</button>
@@ -33,15 +33,15 @@
         <h1>Confirme seu número</h1>
         <h2>Digite o código enviado para<br>(11) 12345-6789</h2>
 
-        <div>
-            <input class="input" type="text" inputmode="numeric" maxlength="1" />
-            <input class="input" type="text" inputmode="numeric" maxlength="1" />
-            <input class="input" type="text" inputmode="numeric" maxlength="1" />
-            <input class="input" type="text" inputmode="numeric" maxlength="1" />
-            <input class="input" type="text" inputmode="numeric" maxlength="1" />
-            <input class="input" type="text" inputmode="numeric" maxlength="1" />
+        <div class="conteiner-codigo">
+            <input class="input-codigo" type="text" inputmode="numeric" maxlength="1" />
+            <input class="input-codigo" type="text" inputmode="numeric" maxlength="1" />
+            <input class="input-codigo" type="text" inputmode="numeric" maxlength="1" />
+            <input class="input-codigo" type="text" inputmode="numeric" maxlength="1" />
+            <input class="input-codigo" type="text" inputmode="numeric" maxlength="1" />
+            <input class="input-codigo" type="text" inputmode="numeric" maxlength="1" />
         </div>
-        <button>Reenviar código</button>
+        <button class="botao-reenviar">Reenviar código</button>
     </section>
     
     <script src="js/script-tela-cadastro.js"></script>
