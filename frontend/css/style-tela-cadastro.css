@@ -57,8 +57,8 @@ input {
 }
 
 button {
-    background-color: var(--button-no-clickable);
-    color: var(--button-text-no-clickable);
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
     width: 350px;
     height: 52px;
     border-radius: 15px;
@@ -68,6 +68,10 @@ button {
 
     font-size: 16px;
     font-weight: 600;
+}
+button:disabled {
+    background-color: var(--button-no-clickable);
+    color: var(--button-text-no-clickable);
 }
 
 p {
