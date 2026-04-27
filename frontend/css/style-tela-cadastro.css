@@ -13,7 +13,7 @@
 .etapa01-telefone {
     padding: 164px 0px 237px 0px;
 }
-img {
+.main-icon-circle {
     width: 75px;
     height: 75px;
     display: block;
@@ -34,7 +34,7 @@ h2 {
     text-align: center;
 }
 
-.conteiner-telefone {
+.conteiner-default {
     width: 350px;
     margin: 0px auto;
 }
@@ -43,22 +43,27 @@ label {
     font-weight: 600;
 }
 
-input {
+input, select {
     background-color: var(--secondary-color);
     color: var(--text-quaternary-color);
     border-radius: 15px;
     border-color: transparent;
     font-size: 16px;
     font-weight: 600;
+
+    color: var(--text-primary-color);
 }
-.input-telefone {
+.input-default, select {
     width: 350px;
     height: 52px;
     margin: 4px auto 16px auto;
     padding-left: 19px; /* para espacamento no placeholder */
 }
+select {
+    padding-left: 36px;
+}
 
-button, a {
+button {
     background-color: var(--secondary-color);
     color: var(--primary-color);
     width: 350px;
@@ -112,3 +117,60 @@ p {
     background-color: transparent;
     width: auto; /*para englobar apenas o texto de dentro*/
 }
+
+/*ETAPA03: Ultima etapa, nome e bairro---------------------------------------------*/
+
+.etapa04-nome-bairro {
+    padding: 88px 0px 160px 0px;
+}
+.input-com-descricao, select {
+    width: 350px;
+    height: 52px;
+    padding-left: 19px;
+    margin: 4px auto 5px auto;
+}
+.p-descricao-nome {
+    color: var(--button-text-no-clickable);
+    text-align: left;
+    margin-bottom: 19px;
+}
+.conteiner-com-icone {
+    width: 350px;
+    margin: 0px auto 16px auto;
+    position: relative;
+}
+.icon-location {
+    width: 20px;
+    height:20px;
+    display: block;
+    position: absolute;
+    top: 45px;
+    left: 15px;
+    background-color: transparent;
+}
+
+/*background-color: var(--secondary-color);
+    color: var(--primary-color);*/
+
+a {
+    background-color: var(--button-no-clickable);
+    color: var(--button-text-no-clickable);
+    width: 350px;
+    height: 52px;
+    border-radius: 15px;
+    border-color: transparent;
+    display: block;
+    margin: 0 auto 30px auto;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    text-decoration: none;
+    text-align: center;
+    line-height: 52px;
+}
+a:disabled {
+    background-color: var(--button-no-clickable);
+    color: var(--button-text-no-clickable);
+}
+
