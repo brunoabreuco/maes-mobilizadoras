@@ -2,6 +2,8 @@ from pathlib import Path
 
 import os
 
+from dotenv import load_dotenv
+
 from flask import Flask
 
 from maes_mobilizadoras.models import db
@@ -12,6 +14,8 @@ BASE_DIR = Path(__file__).parent.parent
 
 
 def create_app():
+    load_dotenv()
+
     app = Flask(__name__)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")

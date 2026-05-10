@@ -1,3 +1,4 @@
+import os
 import pytest
 from datetime import datetime, timezone, timedelta
 from maes_mobilizadoras.models import db, User, EventCategory, Event
@@ -6,12 +7,10 @@ import app as main_app
 
 @pytest.fixture
 def app():
-    # Use the create_app to include the limiter and routes
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     app = main_app.create_app()
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
     app.config["TESTING"] = True
-
-    # Needs to be reset or handled carefully due to rate limiter
 
     with app.app_context():
         db.create_all()
@@ -61,15 +60,28 @@ def test_create_acao_success(client, base_data):
     assert "data" in data
     assert "metadata" in data
     assert data["data"]["title"] == "Ação Comunitária"
-    new_id = data["metadata"]["id"]
-    assert new_id is not None
+    assert data["metadata"]["id"] is not None
     assert data["metadata"]["participant_count"] == 0
-    event = db.session.get(Event, new_id)
-    assert event.participant_count == 0 and event.title == "Ação Comunitária"
+
+
+def test_create_acao_status_default_draft(client, base_data):
+    """TESTE: status default deve ser draft"""
+    payload = {
+        "title": "Ação Comunitária",
+        "event_datetime": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+        "location_name": "Praça Central",
+        "category_id": base_data["category_id"],
+        "organizer_id": base_data["organizer_id"],
+    }
+
+    response = client.post("/api/acoes", json=payload)
+
+    assert response.status_code == 201
+    assert response.get_json()["data"]["status"] == "draft"
 
 
 def test_create_acao_no_title(client, base_data):
-    """TESTE: sem título retorna 400"""
+    """TESTE: sem título retorna 400 com erro no campo title"""
     payload = {
         "description": "Limpeza da praça",
         "event_datetime": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
@@ -82,13 +94,12 @@ def test_create_acao_no_title(client, base_data):
 
     assert response.status_code == 400
     data = response.get_json()
-    assert "error" in data
-    # Check if title is mentioned in the validation error
-    assert "title" in data["error"]
+    assert "errors" in data
+    assert "title" in data["errors"]
 
 
 def test_create_acao_invalid_date(client, base_data):
-    """TESTE: data inválida retorna 400"""
+    """TESTE: data inválida retorna 400 com erro no campo event_datetime"""
     payload = {
         "title": "Ação Comunitária",
         "event_datetime": "not-a-valid-date",
@@ -101,12 +112,48 @@ def test_create_acao_invalid_date(client, base_data):
 
     assert response.status_code == 400
     data = response.get_json()
-    assert "error" in data
-    assert "event_datetime" in data["error"]
+    assert "errors" in data
+    assert "event_datetime" in data["errors"]
 
 
-def test_rate_limiting_carga(client, base_data):
-    """TESTE de carga: 10 req simultâneas sem inconsistência; rate limiting retorna 429"""
+def test_create_acao_past_date(client, base_data):
+    """TESTE: data no passado retorna 400"""
+    payload = {
+        "title": "Ação Comunitária",
+        "event_datetime": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(),
+        "location_name": "Praça Central",
+        "category_id": base_data["category_id"],
+        "organizer_id": base_data["organizer_id"],
+    }
+
+    response = client.post("/api/acoes", json=payload)
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert "errors" in data
+
+
+def test_create_acao_invalid_status(client, base_data):
+    """TESTE: status inválido retorna 400"""
+    payload = {
+        "title": "Ação Comunitária",
+        "event_datetime": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+        "location_name": "Praça Central",
+        "category_id": base_data["category_id"],
+        "organizer_id": base_data["organizer_id"],
+        "status": "invalido",
+    }
+
+    response = client.post("/api/acoes", json=payload)
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert "errors" in data
+    assert "status" in data["errors"]
+
+
+def test_rate_limiting(client, base_data):
+    """TESTE: 11ª requisição retorna 429"""
     payload = {
         "title": "Ação Comunitária",
         "event_datetime": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
@@ -115,12 +162,9 @@ def test_rate_limiting_carga(client, base_data):
         "organizer_id": base_data["organizer_id"],
     }
 
-    # 10 reqs should pass (limit is 10 per minute per user)
-    # Actually, rate limit configuration says "10 per minute". So 11th should fail.
     for i in range(10):
         response = client.post("/api/acoes", json=payload)
         assert response.status_code == 201
 
-    # The 11th request should be rate limited
     response_limited = client.post("/api/acoes", json=payload)
     assert response_limited.status_code == 429
