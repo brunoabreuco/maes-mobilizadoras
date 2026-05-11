@@ -1,41 +1,68 @@
-const input = document.getElementById("phone");
-const button = document.querySelector("button");
-const etapa1 = document.querySelector(".etapa01-telefone");
-const etapa2 = document.querySelector(".etapa02-codigo-SMS");
+const etapas = document.querySelectorAll("section");
+let etapaAtual = 0;
 
-button.disabled = true;
+// inicia mostrando só a primeira etapa
+function mostrarEtapa(index) {
+    etapas.forEach((etapa, i) => {
+        etapa.style.display = i === index ? "block" : "none";
+    });
+}
 
-input.addEventListener("input", () => {
-  let value = input.value.replace(/\D/g, ""); // só números
+mostrarEtapa(etapaAtual);
 
-  value = value.substring(0, 11);
+// -------------------- ETAPA 1 (telefone)
+const inputTelefone = document.getElementById("phone");
+const botaoTelefone = document.querySelector(".etapa01-telefone button");
 
-  if (value.length > 0) {
-    value = "(" + value;
-  }
-  if (value.length > 3) {
-    value = value.slice(0, 3) + ") " + value.slice(3);
-  }
-  if (value.length > 10) {
-    value = value.slice(0, 10) + "-" + value.slice(10);
-  }
+botaoTelefone.disabled = true;
 
-  input.value = value;
+inputTelefone.addEventListener("input", () => {
+    let value = inputTelefone.value.replace(/\D/g, "").slice(0, 11);
 
+    if (value.length > 0) value = "(" + value;
+    if (value.length > 3) value = value.slice(0, 3) + ") " + value.slice(3);
+    if (value.length > 10) value = value.slice(0, 10) + "-" + value.slice(10);
 
-  const numeros = value.replace(/\D/g, "");
-  if (numeros.length === 10 || numeros.length === 11) {
-    button.disabled = false;
-  } else {
-    button.disabled = true;
-  }
+    inputTelefone.value = value;
+
+    const numeros = value.replace(/\D/g, "");
+    botaoTelefone.disabled = !(numeros.length === 10 || numeros.length === 11);
 });
 
-button.addEventListener("click", () => {
-  if (button.disabled) return;
+botaoTelefone.addEventListener("click", () => {
+    etapaAtual = 1;
+    mostrarEtapa(etapaAtual);
+});
 
-  etapa1.style.display = "none";
-  if (etapa2) {
-    etapa2.style.display = "block";
-  }
+
+// -------------------- ETAPA 2 (SMS)
+const inputsCodigo = document.querySelectorAll(".input-codigo");
+const botaoReenviar = document.querySelector(".botao-reenviar");
+
+function codigoCompleto() {
+    return Array.from(inputsCodigo).every(i => i.value.trim().length === 1);
+}
+
+inputsCodigo.forEach((input, index) => {
+    input.addEventListener("input", () => {
+        if (input.value.length === 1 && inputsCodigo[index + 1]) {
+            inputsCodigo[index + 1].focus();
+        }
+
+        if (codigoCompleto()) {
+            setTimeout(() => {
+                etapaAtual = 2;
+                mostrarEtapa(etapaAtual);
+            }, 300);
+        }
+    });
+});
+
+
+// -------------------- ETAPA 3 (final)
+const botaoFinal = document.querySelector(".etapa04-nome-bairro a");
+
+botaoFinal.addEventListener("click", (e) => {
+    e.preventDefault();
+    alert("Cadastro finalizado!");
 });
