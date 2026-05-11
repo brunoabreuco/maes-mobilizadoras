@@ -4,37 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./css/styleCalendarioAcoes.css">
+    <link rel="stylesheet" href="./css/styleCalendarioAcoes.css">
+    <link rel="stylesheet" href="./css/styleComponenteAviso.css">
+    <link rel="stylesheet" href="./css/styleComponenteEventoDetalhado.css">
+    <link rel="stylesheet" href="./css/style.ComponenteProximosEventos.css">
     <title>Document</title>
 </head>
 <body>
-    <div class="calendar">
+    <div class="calendar-container">
+      <div>
+        <div class="calendar">
 
-        <div class="header">
-            <button id="prevBtn">
-                <img src="images/componente calendario/chevron_left.png">
-            </button>
+            <div class="header">
+                <button id="prevBtn">
+                    <img src="images/componente calendario/chevron_left.png">
+                </button>
 
-            <div id="monthYear"></div>
+                <div id="monthYear"></div>
 
-            <button id="nextBtn">
-                <img src="images/componente calendario/chevron_right.png">
-            </button>
+                <button id="nextBtn">
+                    <img src="images/componente calendario/chevron_right.png">
+                </button>
+            </div>
+
+            <div class="days">
+                <div class="day">Dom</div>
+                <div class="day">Seg</div>
+                <div class="day">Ter</div>
+                <div class="day">Qua</div>
+                <div class="day">Qui</div>
+                <div class="day">Sex</div>
+                <div class="day">Sáb</div>
+            </div>
+
+            <div class="dates", id="dates"></div>
+            
         </div>
-
-        <div class="days">
-            <div class="day">Dom</div>
-            <div class="day">Seg</div>
-            <div class="day">Ter</div>
-            <div class="day">Qua</div>
-            <div class="day">Qui</div>
-            <div class="day">Sex</div>
-            <div class="day">Sáb</div>
-        </div>
-
-        <div class="dates", id="dates"></div>
-        
+      </div>
     </div>
-
+    
+    <div id="proximos-eventos-container">
+      <h1>Próximos eventos</h1>
+      <div id="proximos-eventos">
+      </div>
+    </div>
+    <script src="./js/components.js"></script>
     <script src="./js/scriptCalendarioAcoes.js"></script>
 </body>
 </html>
