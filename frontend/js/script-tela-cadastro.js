@@ -1,8 +1,10 @@
 // ============================================================
-// CONFIGURAÇÃO
-// Atualize REDIRECT_APOS_LOGIN quando a página destino estiver disponível.
+// INICIALIZAÇÃO
+// Todo o código fica dentro de uma IIFE async para permitir await no topo.
 // ============================================================
-const API_BASE = 'http://127.0.0.1:5000'; // DEV — substituir pela variável de ambiente quando o padrão for definido
+(async () => {
+
+const { api_base: API_BASE } = await fetch('/api/config').then(r => r.json());
 const REDIRECT_APOS_LOGIN = '/home.html';
 
 // ============================================================
@@ -349,3 +351,5 @@ botaoFinal.addEventListener('click', async (e) => {
         enviandoPerfil = false;
     }
 });
+
+})();
