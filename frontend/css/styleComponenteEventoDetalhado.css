@@ -38,7 +38,7 @@
     text-align: center;
     margin-right: 4px;
 }
-.c-componenteEventoDetalhado .tipo_evento {
+.c-componenteEventoDetalhado #tipo_evento {
     display: block;
     width: 39px;
     height: 14px;
@@ -46,7 +46,7 @@
     color: #00636A;
     line-height: 14px;;
 }
-.c-componenteEventoDetalhado .confirmado {
+.c-componenteEventoDetalhado #confirmado {
     display: block;
     width: 71px;
     height: 14px;

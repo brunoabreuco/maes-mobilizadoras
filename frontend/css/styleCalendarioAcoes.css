@@ -5,11 +5,11 @@
     font-family: "Inter", sans-serif;
 }
 
-.calendar-container {
-    display: block;
-    margin: 0 auto;
+.active {
+    background-color: #00636A;
+    color: #FAF6F4;
 }
-.calendar-container>div {
+.calendar-container {
     min-height: 100wh;
     display: flex;
     align-items: center;
