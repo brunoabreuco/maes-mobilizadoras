@@ -36,12 +36,14 @@ async function loadComponent(htmlUrl) {
  */
 function setProps(element, props) {
   const it = element.querySelectorAll('*');
+
   for (let el of it) {
     // Define o conteúdo de texto baseado em data-prop
     if (el.hasAttribute('data-prop')) {
       let propName = el.getAttribute('data-prop');
       el.innerText = props[propName];
     }
+
     // Define atributos baseados em data-attr-
     for (let attr of el.attributes) {
       if (attr.name.startsWith('data-attr-')) {
@@ -51,8 +53,36 @@ function setProps(element, props) {
       }
     }
   }
-}
 
+  // CONTROLE DE VISIBILIDADE POR TELA
+
+  const barraPesquisa = element.querySelector('.barra_pesquisa');
+  const filtros = element.querySelector('.filtros');
+  const naoLidos = element.querySelector('.nao_lidos');
+
+  const pagina = window.location.pathname;
+
+  // tela_avisos.html
+  if (pagina.includes('tela_avisos')) {
+    if (barraPesquisa) barraPesquisa.style.display = 'none';
+    if (filtros) filtros.style.display = 'none';
+  }
+
+  // tela_meu_perfil.html e tela_calendario.html
+  if (
+    pagina.includes('tela_meu_perfil') ||
+    pagina.includes('tela_calendario')
+  ) {
+    if (barraPesquisa) barraPesquisa.style.display = 'none';
+    if (filtros) filtros.style.display = 'none';
+    if (naoLidos) naoLidos.style.display = 'none';
+  }
+
+  // tela_acoes_comunitarias.html
+  if (pagina.includes('tela_acoes_comunitarias')) {
+    if (naoLidos) naoLidos.style.display = 'none';
+  }
+}
 /**
  * Cria uma instância de um componente, carrega seu HTML e aplica as propriedades.
  * 

@@ -64,3 +64,14 @@
 .c-componenteAviso .lembrete {
     display: none;
 }
+.c-componenteAviso hr {
+    width: 100%;
+    height: 1.5px;
+    border: none;
+    background-color: #CFCFCF;
+}
+
+.c-componenteAviso .conteudo_hr {
+    display: flex;
+    flex-direction: column;
+}
