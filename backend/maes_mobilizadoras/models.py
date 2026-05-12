@@ -25,6 +25,7 @@ class User(db.Model):
     __tablename__ = "users"
     id = Column(String(36), primary_key=True, default=generate_uuid)
     phone = Column(String(20), unique=True, nullable=False)
+    pending_phone = Column(String(20), nullable=True)
     full_name = Column(String(150), nullable=False)
     neighborhood = Column(String(100), nullable=False)
     role = Column(String(20), nullable=False)

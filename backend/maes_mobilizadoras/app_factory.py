@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 
 from flask import Flask
+from supabase import create_client
 
 from maes_mobilizadoras.models import db
 from maes_mobilizadoras.limiter import limiter
@@ -24,6 +25,13 @@ def create_app():
 
     db.init_app(app)
     limiter.init_app(app)
+
+    # Cliente Supabase com service role key para operacoes admin (delete_user)
+    supabase = create_client(
+        os.environ["SUPABASE_URL"],
+        os.environ["SUPABASE_SERVICE_ROLE_KEY"],
+    )
+    app.extensions["supabase"] = supabase
 
     with app.app_context():
         db.create_all()

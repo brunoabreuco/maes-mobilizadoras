@@ -47,3 +47,33 @@ class AcaoResponse(BaseModel):
     metadata: AcaoMetadata
 
     model_config = ConfigDict(from_attributes=True)
+
+CAMPOS_IMUTAVEIS = {"role", "id"}
+
+class UserResponse(BaseModel):
+    id: str
+    phone: str
+    full_name: str
+    neighborhood: Optional[str] = None
+    role: str
+    avatar_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserUpdateRequest(BaseModel):
+    full_name: Optional[str] = Field(None, min_length=1, max_length=150)
+    avatar_url: Optional[str] = Field(None, max_length=500)
+    phone: Optional[str] = Field(None, min_length=8, max_length=20)
+
+    @model_validator(mode="before")
+    @classmethod
+    def rejeitar_campos_imutaveis(cls, values: dict) -> dict:
+        encontrados = CAMPOS_IMUTAVEIS & set(values.keys())
+        if encontrados:
+            raise ValueError(f"Campos não permitidos: {', '.join(sorted(encontrados))}")
+        return values
+
+
+class PhoneConfirmRequest(BaseModel):
+    token: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
