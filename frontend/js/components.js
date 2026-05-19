@@ -95,6 +95,13 @@ async function make(spec, props) {
   const element = await loadComponent(htmlUrl);
   element.classList.add('c-' + spec);
   setProps(element, props);
+
+    if (spec === 'componenteCadastroAvisosEventos') {
+
+    controlarCadastroAvisosEventos(element);
+
+  }
+  
   return element;
 }
 
@@ -126,3 +133,166 @@ function loadAllComponents() {
 // Inicializa o carregamento automático de componentes ao carregar o script
 loadAllComponents();
 
+function controlarCadastroAvisosEventos(element) {
+
+  const container =
+    element.querySelector('#container-principal');
+
+  const criarEvento =
+    element.querySelector('#criar-evento');
+
+  const criarAviso =
+    element.querySelector('#criar-aviso');
+
+  const adicionarMobilizadora =
+    element.querySelector('#adicionar-mobilizadora');
+
+  const detalhesEvento =
+    element.querySelector('#detalhes-do-evento');
+
+  const botaoFechar =
+    element.querySelector('#header-botoes button:last-child');
+
+
+  // COMEÇA TUDO OCULTO
+
+  container.style.display = 'none';
+
+  criarEvento.style.display = 'none';
+
+  criarAviso.style.display = 'none';
+
+  adicionarMobilizadora.style.display = 'none';
+
+  detalhesEvento.style.display = 'none';
+
+
+
+  // FUNÇÃO ABRIR MODAL
+
+  function abrirModal(tipo) {
+
+    container.style.display = 'flex';
+
+
+    criarEvento.style.display = 'none';
+
+    criarAviso.style.display = 'none';
+
+    adicionarMobilizadora.style.display = 'none';
+
+    detalhesEvento.style.display = 'none';
+
+
+    if (tipo === 'criar-evento') {
+      criarEvento.style.display = 'block';
+    }
+
+    if (tipo === 'criar-aviso') {
+      criarAviso.style.display = 'block';
+    }
+
+    if (tipo === 'adicionar-mobilizadora') {
+      adicionarMobilizadora.style.display = 'block';
+    }
+
+    if (tipo === 'detalhes-evento') {
+      detalhesEvento.style.display = 'block';
+    }
+
+
+    // ESCURECE E TRAVA
+
+    document.body.style.overflow = 'hidden';
+
+  }
+
+
+
+  // FUNÇÃO FECHAR MODAL
+
+  function fecharModal() {
+
+    container.style.display = 'none';
+
+    criarEvento.style.display = 'none';
+
+    criarAviso.style.display = 'none';
+
+    adicionarMobilizadora.style.display = 'none';
+
+    detalhesEvento.style.display = 'none';
+
+
+    // VOLTA AO NORMAL
+
+    document.body.style.overflow = 'auto';
+
+  }
+
+
+
+  // BOTÃO AZUL
+
+  const botaoAzul =
+    document.getElementById('botao_azul');
+
+  if (botaoAzul) {
+
+    botaoAzul.addEventListener('click', () => {
+
+      abrirModal('criar-aviso');
+
+    });
+
+  }
+
+
+
+  // BOTÃO VERMELHO
+
+  const botaoVermelho =
+    document.getElementById('botao_vermelho');
+
+  if (botaoVermelho) {
+
+    botaoVermelho.addEventListener('click', () => {
+
+      abrirModal('adicionar-mobilizadora');
+
+    });
+
+  }
+
+
+
+  // BOTÃO +
+
+  const botaoAdicionarEvento =
+    document.getElementById('icone-adicionar-evento');
+
+  if (botaoAdicionarEvento) {
+
+    botaoAdicionarEvento.addEventListener('click', () => {
+
+      abrirModal('criar-evento');
+
+    });
+
+  }
+
+
+
+  // BOTÃO X
+
+  if (botaoFechar) {
+
+    botaoFechar.addEventListener('click', () => {
+
+      fecharModal();
+
+    });
+
+  }
+
+}
