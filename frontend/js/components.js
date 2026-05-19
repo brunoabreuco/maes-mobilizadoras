@@ -145,6 +145,9 @@ function controlarCadastroAvisosEventos(element) {
   const botaoFechar = element.querySelector('#header-botoes button:last-child');
   const tituloModal = element.querySelector('.header h2');
   const botaoAviso = element.querySelector('#botao-aviso');
+  const botaoFooter = element.querySelector('#confirmar-presenca');
+  
+  
 
   // começa tudo fechado
   container.style.display = 'none';
@@ -157,30 +160,37 @@ function controlarCadastroAvisosEventos(element) {
 
   function abrirModal(tipo) {
 
-    container.style.display = 'flex';
+  container.style.display = 'flex';
 
-    criarEvento.style.display = 'none';
-    criarAviso.style.display = 'none';
-    adicionarMobilizadora.style.display = 'none';
-    detalhesEvento.style.display = 'none';
+  criarEvento.style.display = 'none';
+  criarAviso.style.display = 'none';
+  adicionarMobilizadora.style.display = 'none';
+  detalhesEvento.style.display = 'none';
 
-    document.body.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
 
-
-    // título
-    if (tituloModal) {
-      if (tipo === 'detalhes-evento') tituloModal.innerText = 'Detalhes do Evento';
-      if (tipo === 'criar-evento') tituloModal.innerText = 'Criar Evento';
-      if (tipo === 'criar-aviso') tituloModal.innerText = 'Criar Aviso';
-      if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
-    }
-
-    // mostrar seção certa
-    if (tipo === 'criar-evento') criarEvento.style.display = 'block';
-    if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
-    if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
-    if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
+  // título
+  if (tituloModal) {
+    if (tipo === 'detalhes-evento') tituloModal.innerText = 'Detalhes do Evento';
+    if (tipo === 'criar-evento') tituloModal.innerText = 'Criar Evento';
+    if (tipo === 'criar-aviso') tituloModal.innerText = 'Criar Aviso';
+    if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
   }
+
+  // footer button text
+  if (botaoFooter) {
+    if (tipo === 'criar-evento') botaoFooter.innerText = 'Criar Evento';
+    if (tipo === 'criar-aviso') botaoFooter.innerText = 'Enviar Aviso';
+    if (tipo === 'adicionar-mobilizadora') botaoFooter.innerText = 'Adicionar Mobilizadora';
+    if (tipo === 'detalhes-evento') botaoFooter.innerText = 'Confirmar Presença';
+  }
+
+  // mostrar seção certa
+  if (tipo === 'criar-evento') criarEvento.style.display = 'block';
+  if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
+  if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
+  if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
+}
 
 
   function fecharModal() {
@@ -221,5 +231,25 @@ function controlarCadastroAvisosEventos(element) {
   if (botaoAdicionarEvento) {
     botaoAdicionarEvento.addEventListener('click', () => abrirModal('criar-evento'));
   }
+
+
+  const pagina = window.location.pathname;
+  // ESCONDE O BOTÃO DE AVISO NO MODAL NA TELA DE PERFIL
+if (pagina.includes('tela_meu_perfil')) {
+  if (botaoAviso) {
+    botaoAviso.style.display = 'none';
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const evento = e.target.closest('.conteudo');
+
+  if (!evento) return;
+
+  // evita clicar em botões internos
+  if (e.target.closest('button')) return;
+
+  abrirModal('detalhes-evento');
+});
 
 }

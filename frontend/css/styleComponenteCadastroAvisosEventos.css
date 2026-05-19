@@ -29,11 +29,14 @@ body {
     left: 0;
 
     width: 100%;
-    height: 90%;
-
+    height: 95vh; /* importante: usa viewport */
+    
     background-color: #F5EDE9;
 
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* melhora no mobile */
 }
+
 .header {
     position: sticky;
     top: 0;
