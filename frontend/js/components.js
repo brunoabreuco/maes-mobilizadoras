@@ -101,7 +101,7 @@ async function make(spec, props) {
     controlarCadastroAvisosEventos(element);
 
   }
-  
+
   return element;
 }
 
@@ -170,42 +170,103 @@ function controlarCadastroAvisosEventos(element) {
 
   // FUNÇÃO ABRIR MODAL
 
-  function abrirModal(tipo) {
+function abrirModal(tipo) {
 
-    container.style.display = 'flex';
-
-
-    criarEvento.style.display = 'none';
-
-    criarAviso.style.display = 'none';
-
-    adicionarMobilizadora.style.display = 'none';
-
-    detalhesEvento.style.display = 'none';
+  container.style.display = 'flex';
 
 
-    if (tipo === 'criar-evento') {
-      criarEvento.style.display = 'block';
-    }
+  criarEvento.style.display = 'none';
 
-    if (tipo === 'criar-aviso') {
-      criarAviso.style.display = 'block';
-    }
+  criarAviso.style.display = 'none';
 
-    if (tipo === 'adicionar-mobilizadora') {
-      adicionarMobilizadora.style.display = 'block';
-    }
+  adicionarMobilizadora.style.display = 'none';
 
-    if (tipo === 'detalhes-evento') {
-      detalhesEvento.style.display = 'block';
-    }
+  detalhesEvento.style.display = 'none';
 
 
-    // ESCURECE E TRAVA
+  // TÍTULO DO HEADER
 
-    document.body.style.overflow = 'hidden';
+  const tituloModal =
+    element.querySelector('.header h2');
+
+
+  if (tipo === 'detalhes-evento') {
+
+    tituloModal.innerText = 'Detalhes do Evento';
 
   }
+
+  if (tipo === 'criar-evento') {
+
+    tituloModal.innerText = 'Criar Evento';
+
+  }
+
+  if (tipo === 'criar-aviso') {
+
+    tituloModal.innerText = 'Criar Aviso';
+
+  }
+
+  if (tipo === 'adicionar-mobilizadora') {
+
+    tituloModal.innerText = 'Adicionar Mobilizadora';
+
+  }
+
+
+  // BOTÃO DE AVISO
+
+  if (botaoAviso) {
+
+    if (tipo === 'detalhes-evento') {
+
+      botaoAviso.style.display = 'block';
+
+    }
+
+    else {
+
+      botaoAviso.style.display = 'none';
+
+    }
+
+  }
+
+
+  // EXIBE A SEÇÃO CORRETA
+
+  if (tipo === 'criar-evento') {
+
+    criarEvento.style.display = 'block';
+
+  }
+
+  if (tipo === 'criar-aviso') {
+
+    criarAviso.style.display = 'block';
+
+  }
+
+  if (tipo === 'adicionar-mobilizadora') {
+
+    adicionarMobilizadora.style.display = 'block';
+
+  }
+
+  if (tipo === 'detalhes-evento') {
+
+    detalhesEvento.style.display = 'block';
+
+  }
+
+
+  // ESCURECE E TRAVA A TELA
+
+  document.body.style.overflow = 'hidden';
+
+}
+
 
 
 
@@ -281,7 +342,8 @@ function controlarCadastroAvisosEventos(element) {
 
   }
 
-
+  const botaoAviso =
+  element.querySelector('#header-botoes button:first-child');
 
   // BOTÃO X
 
