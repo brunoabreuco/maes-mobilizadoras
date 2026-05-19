@@ -135,226 +135,91 @@ loadAllComponents();
 
 function controlarCadastroAvisosEventos(element) {
 
-  const container =
-    element.querySelector('#container-principal');
+  const container = element.querySelector('#container-principal');
 
-  const criarEvento =
-    element.querySelector('#criar-evento');
+  const criarEvento = element.querySelector('#criar-evento');
+  const criarAviso = element.querySelector('#criar-aviso');
+  const adicionarMobilizadora = element.querySelector('#adicionar-mobilizadora');
+  const detalhesEvento = element.querySelector('#detalhes-do-evento');
 
-  const criarAviso =
-    element.querySelector('#criar-aviso');
+  const botaoFechar = element.querySelector('#header-botoes button:last-child');
+  const tituloModal = element.querySelector('.header h2');
+  const botaoAviso = element.querySelector('#botao-aviso');
 
-  const adicionarMobilizadora =
-    element.querySelector('#adicionar-mobilizadora');
-
-  const detalhesEvento =
-    element.querySelector('#detalhes-do-evento');
-
-  const botaoFechar =
-    element.querySelector('#header-botoes button:last-child');
-
-
-  // COMEÇA TUDO OCULTO
-
+  // começa tudo fechado
   container.style.display = 'none';
 
   criarEvento.style.display = 'none';
-
   criarAviso.style.display = 'none';
-
   adicionarMobilizadora.style.display = 'none';
-
   detalhesEvento.style.display = 'none';
 
 
+  function abrirModal(tipo) {
 
-  // FUNÇÃO ABRIR MODAL
+    container.style.display = 'flex';
 
-function abrirModal(tipo) {
+    criarEvento.style.display = 'none';
+    criarAviso.style.display = 'none';
+    adicionarMobilizadora.style.display = 'none';
+    detalhesEvento.style.display = 'none';
 
-  container.style.display = 'flex';
-
-
-  criarEvento.style.display = 'none';
-
-  criarAviso.style.display = 'none';
-
-  adicionarMobilizadora.style.display = 'none';
-
-  detalhesEvento.style.display = 'none';
+    document.body.style.overflow = 'hidden';
 
 
-  // TÍTULO DO HEADER
-
-  const tituloModal =
-    element.querySelector('.header h2');
-
-
-  if (tipo === 'detalhes-evento') {
-
-    tituloModal.innerText = 'Detalhes do Evento';
-
-  }
-
-  if (tipo === 'criar-evento') {
-
-    tituloModal.innerText = 'Criar Evento';
-
-  }
-
-  if (tipo === 'criar-aviso') {
-
-    tituloModal.innerText = 'Criar Aviso';
-
-  }
-
-  if (tipo === 'adicionar-mobilizadora') {
-
-    tituloModal.innerText = 'Adicionar Mobilizadora';
-
-  }
-
-
-  // BOTÃO DE AVISO
-
-  if (botaoAviso) {
-
-    if (tipo === 'detalhes-evento') {
-
-      botaoAviso.style.display = 'block';
-
+    // título
+    if (tituloModal) {
+      if (tipo === 'detalhes-evento') tituloModal.innerText = 'Detalhes do Evento';
+      if (tipo === 'criar-evento') tituloModal.innerText = 'Criar Evento';
+      if (tipo === 'criar-aviso') tituloModal.innerText = 'Criar Aviso';
+      if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
     }
 
-    else {
-
-      botaoAviso.style.display = 'none';
-
-    }
-
+    // mostrar seção certa
+    if (tipo === 'criar-evento') criarEvento.style.display = 'block';
+    if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
+    if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
+    if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
   }
 
-
-  // EXIBE A SEÇÃO CORRETA
-
-  if (tipo === 'criar-evento') {
-
-    criarEvento.style.display = 'block';
-
-  }
-
-  if (tipo === 'criar-aviso') {
-
-    criarAviso.style.display = 'block';
-
-  }
-
-  if (tipo === 'adicionar-mobilizadora') {
-
-    adicionarMobilizadora.style.display = 'block';
-
-  }
-
-  if (tipo === 'detalhes-evento') {
-
-    detalhesEvento.style.display = 'block';
-
-  }
-
-
-  // ESCURECE E TRAVA A TELA
-
-  document.body.style.overflow = 'hidden';
-
-}
-
-
-
-
-  // FUNÇÃO FECHAR MODAL
 
   function fecharModal() {
-
     container.style.display = 'none';
 
     criarEvento.style.display = 'none';
-
     criarAviso.style.display = 'none';
-
     adicionarMobilizadora.style.display = 'none';
-
     detalhesEvento.style.display = 'none';
 
-
-    // VOLTA AO NORMAL
-
     document.body.style.overflow = 'auto';
-
   }
 
+
+  // BOTÃO X
+  if (botaoFechar) {
+    botaoFechar.addEventListener('click', fecharModal);
+  }
 
 
   // BOTÃO AZUL
-
-  const botaoAzul =
-    document.getElementById('botao_azul');
-
+  const botaoAzul = document.getElementById('botao_azul');
   if (botaoAzul) {
-
-    botaoAzul.addEventListener('click', () => {
-
-      abrirModal('criar-aviso');
-
-    });
-
+    botaoAzul.addEventListener('click', () => abrirModal('criar-aviso'));
   }
-
-
 
   // BOTÃO VERMELHO
-
-  const botaoVermelho =
-    document.getElementById('botao_vermelho');
-
+  const botaoVermelho = document.getElementById('botao_vermelho');
   if (botaoVermelho) {
-
-    botaoVermelho.addEventListener('click', () => {
-
-      abrirModal('adicionar-mobilizadora');
-
-    });
-
+    botaoVermelho.addEventListener('click', () => abrirModal('adicionar-mobilizadora'));
   }
-
-
 
   // BOTÃO +
-
-  const botaoAdicionarEvento =
-    document.getElementById('icone-adicionar-evento');
+  // ⚠️ IMPORTANTE: está fora do componente, então usamos document
+  const botaoAdicionarEvento = document.querySelector('[style*="icone-adicionar-evento"]') 
+    || document.querySelector('button img[src*="icone-adicionar-evento"]')?.parentElement;
 
   if (botaoAdicionarEvento) {
-
-    botaoAdicionarEvento.addEventListener('click', () => {
-
-      abrirModal('criar-evento');
-
-    });
-
-  }
-
-  const botaoAviso =
-  element.querySelector('#header-botoes button:first-child');
-
-  // BOTÃO X
-
-  if (botaoFechar) {
-
-    botaoFechar.addEventListener('click', () => {
-
-      fecharModal();
-
-    });
-
+    botaoAdicionarEvento.addEventListener('click', () => abrirModal('criar-evento'));
   }
 
 }
