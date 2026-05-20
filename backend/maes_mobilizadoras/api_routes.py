@@ -4,11 +4,12 @@ from pydantic import ValidationError
 import os
 
 from maes_mobilizadoras.limiter import limiter
-from maes_mobilizadoras.models import Event, User, db
+from maes_mobilizadoras.models import Event, User, db, FCMToken
 from maes_mobilizadoras.schemas import (
     AcaoData,
     AcaoMetadata,
     AcaoResponse,
+    FCMTokenRegister,
     PhoneConfirmRequest,
     UserResponse,
     UserUpdateRequest,
@@ -224,6 +225,41 @@ def delete_me():
     return "", 204
 
 
+@api.post("/me/fcm-token")
+@require_auth
+def register_fcm_token():
+    body = request.get_json(silent=True) or {}
+    try:
+        payload = FCMTokenRegister(**body)
+    except ValidationError as e:
+        return jsonify({"errors": _pydantic_errors_to_dict(e)}), 400
+
+    # Upsert token
+    fcm_token = FCMToken.query.filter_by(token=payload.token).first()
+    if fcm_token:
+        fcm_token.user_id = g.current_user_id
+        fcm_token.device_type = payload.device_type
+        fcm_token.is_active = True
+        fcm_token.last_used_at = db.func.now()
+    else:
+        fcm_token = FCMToken(
+            user_id=g.current_user_id,
+            token=payload.token,
+            device_type=payload.device_type,
+            last_used_at=db.func.now(),
+        )
+        db.session.add(fcm_token)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        db.session.rollback()
+        return jsonify({"error": "token_save_failure"}), 500
+
+    return jsonify({"message": "token_registered"}), 200
+
+
 # =============================================================================
 # ENDPOINT DE AUTENTICAÇÃO OTP E GOOGLE
 # =============================================================================
@@ -331,4 +367,17 @@ def logout():
 # =============================================================================
 @api.get("/config")
 def frontend_config():
-    return jsonify({"api_base": os.environ.get("API_BASE", "")})
+    return jsonify(
+        {
+            "api_base": os.environ.get("API_BASE", ""),
+            "firebase": {
+                "apiKey": os.environ.get("FIREBASE_API_KEY"),
+                "authDomain": os.environ.get("FIREBASE_AUTH_DOMAIN"),
+                "projectId": os.environ.get("FIREBASE_PROJECT_ID"),
+                "storageBucket": os.environ.get("FIREBASE_STORAGE_BUCKET"),
+                "messagingSenderId": os.environ.get("FIREBASE_MESSAGING_SENDER_ID"),
+                "appId": os.environ.get("FIREBASE_APP_ID"),
+                "vapidKey": os.environ.get("FIREBASE_VAPID_KEY"),
+            },
+        }
+    )

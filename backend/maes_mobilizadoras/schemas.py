@@ -81,3 +81,8 @@ class UserUpdateRequest(BaseModel):
 
 class PhoneConfirmRequest(BaseModel):
     token: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+
+class FCMTokenRegister(BaseModel):
+    token: str
+    device_type: Optional[Literal["android", "ios", "web"]] = None

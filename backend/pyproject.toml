@@ -15,6 +15,7 @@ dependencies = [
     "supabase>=2.30.0",
     "twilio>=9.10.9",
     "pyjwt>=2.12.1",
+    "firebase-admin>=6.5.0",
 ]
 
 [tool.setuptools.packages.find]

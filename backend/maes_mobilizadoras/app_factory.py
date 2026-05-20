@@ -1,6 +1,9 @@
 from pathlib import Path
 import os
+import json
 
+import firebase_admin
+from firebase_admin import credentials
 from dotenv import load_dotenv
 from flask import Flask
 from supabase import create_client
@@ -25,6 +28,22 @@ def create_app(test_config: dict | None = None):
 
     db.init_app(app)
     limiter.init_app(app)
+
+    # Initialize Firebase
+    if not firebase_admin._apps:
+        service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+        if service_account_json:
+            try:
+                cred = credentials.Certificate(json.loads(service_account_json))
+                firebase_admin.initialize_app(cred)
+            except Exception as e:
+                app.logger.error(f"Failed to initialize Firebase with JSON: {e}")
+        else:
+            # Fallback to default credentials (e.g. GOOGLE_APPLICATION_CREDENTIALS env var)
+            try:
+                firebase_admin.initialize_app()
+            except Exception as e:
+                app.logger.warning(f"Firebase not initialized: {e}")
 
     supabase = create_client(
         os.environ["SUPABASE_URL"],
