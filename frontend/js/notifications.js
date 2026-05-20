@@ -44,9 +44,26 @@
   const messaging = firebase.messaging();
 
   /**
+   * Registers the service worker and returns the registration
+   */
+  async function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log('Service Worker registered with scope:', registration.scope);
+        return registration;
+      } catch (err) {
+        console.error('Service Worker registration failed:', err);
+      }
+    }
+    return null;
+  }
+
+  /**
    * Registers the FCM token with the backend
    */
   async function registerToken(token) {
+
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) return;
 
@@ -82,8 +99,11 @@
       if (permission === 'granted') {
         console.log('Notification permission granted.');
 
+        const swRegistration = await registerServiceWorker();
+
         const token = await messaging.getToken({
-          vapidKey: config.firebase.vapidKey
+          vapidKey: config.firebase.vapidKey,
+          serviceWorkerRegistration: swRegistration
         });
 
         if (token) {
@@ -98,7 +118,6 @@
       console.error('An error occurred while retrieving token. ', err);
     }
   }
-
   // 4. Handle token refresh
   messaging.onTokenRefresh(async () => {
     try {
