@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from uuid import UUID
 from decimal import Decimal
 from typing import Literal, Optional
 
@@ -34,7 +35,7 @@ class AcaoData(BaseModel):
 
 
 class AcaoMetadata(BaseModel):
-    id: str
+    id: str | UUID
     participant_count: int
     created_at: datetime
     updated_at: datetime
@@ -48,10 +49,12 @@ class AcaoResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 CAMPOS_IMUTAVEIS = {"role", "id"}
 
+
 class UserResponse(BaseModel):
-    id: str
+    id: str | UUID
     phone: str
     full_name: str
     neighborhood: Optional[str] = None

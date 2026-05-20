@@ -34,11 +34,13 @@ def _pydantic_errors_to_dict(exc: ValidationError) -> dict:
         errors[field] = err["msg"]
     return errors
 
+
 def _get_user_or_404(user_id: str):
     user = db.session.get(User, user_id)
     if not user or not user.is_active:
         return None
     return user
+
 
 def _anonymize(user: User) -> None:
     """Substitui dados pessoais por valores anonimos. phone e full_name sao NOT NULL."""
@@ -54,6 +56,7 @@ def _anonymize(user: User) -> None:
 # =============================================================================
 # ENDPOINT DE AÇÕES COMUNITÁRIAS
 # =============================================================================
+
 
 @api.route("/acoes", methods=["POST"])
 @limiter.limit("10 per minute")
@@ -85,6 +88,7 @@ def create_acao():
 
     return jsonify(response_model.model_dump(mode="json")), 201
 
+
 # =============================================================================
 # ENDPOINT DE PERFIL
 # =============================================================================
@@ -94,7 +98,7 @@ def get_me():
     user = _get_user_or_404(g.current_user_id)
     if not user:
         return jsonify({"error": "Usuária não encontrada"}), 404
-    return jsonify(UserResponse.model_validate(user).model_dump()), 200
+    return jsonify(UserResponse.model_validate(user).model_dump(mode="json")), 200
 
 
 @api.patch("/me")
@@ -143,10 +147,12 @@ def update_me():
         return jsonify({"error": "Falha ao salvar alterações"}), 500
 
     status = 202 if phone_change_pending else 200
-    return jsonify({
-        "profile": UserResponse.model_validate(user).model_dump(),
-        "phone_change_pending": phone_change_pending,
-    }), status
+    return jsonify(
+        {
+            "profile": UserResponse.model_validate(user).model_dump(mode="json"),
+            "phone_change_pending": phone_change_pending,
+        }
+    ), status
 
 
 @api.post("/me/phone/confirm")
@@ -168,11 +174,13 @@ def confirm_phone():
 
     try:
         supabase = current_app.extensions["supabase"]
-        supabase.auth.verify_otp({
-            "phone": user.pending_phone,
-            "token": payload.token,
-            "type": "sms",
-        })
+        supabase.auth.verify_otp(
+            {
+                "phone": user.pending_phone,
+                "token": payload.token,
+                "type": "sms",
+            }
+        )
     except Exception:
         return jsonify({"error": "OTP inválido ou expirado"}), 401
 
@@ -186,7 +194,7 @@ def confirm_phone():
         db.session.rollback()
         return jsonify({"error": "Falha ao salvar novo telefone"}), 500
 
-    return jsonify(UserResponse.model_validate(user).model_dump()), 200
+    return jsonify(UserResponse.model_validate(user).model_dump(mode="json")), 200
 
 
 @api.delete("/me")
@@ -215,9 +223,11 @@ def delete_me():
 
     return "", 204
 
+
 # =============================================================================
 # ENDPOINT DE AUTENTICAÇÃO OTP E GOOGLE
 # =============================================================================
+
 
 @auth_bp.post("/otp/request")
 def otp_request():
@@ -250,10 +260,12 @@ def otp_verify():
         return jsonify({"error": str(exc)}), 401
 
     tokens = issue_tokens(str(user.id), user.role)
-    return jsonify({
-        **tokens,
-        "user": {"id": str(user.id), "role": user.role},
-    }), 200
+    return jsonify(
+        {
+            **tokens,
+            "user": {"id": str(user.id), "role": user.role},
+        }
+    ), 200
 
 
 @auth_bp.post("/google/exchange")
@@ -278,10 +290,12 @@ def google_exchange():
 
     user = get_or_create_profile(user_id, full_name=full_name)
     tokens = issue_tokens(str(user.id), user.role)
-    return jsonify({
-        **tokens,
-        "user": {"id": str(user.id), "role": user.role},
-    }), 200
+    return jsonify(
+        {
+            **tokens,
+            "user": {"id": str(user.id), "role": user.role},
+        }
+    ), 200
 
 
 @auth_bp.post("/refresh")
@@ -311,11 +325,10 @@ def logout():
     # Revogação server-side (denylist) fica fora do escopo desta task.
     return jsonify({"message": "logged_out"}), 200
 
+
 # =============================================================================
 # INJEÇÃO DO ENV NO FRONTEND
 # =============================================================================
-@api.get('/config')
+@api.get("/config")
 def frontend_config():
-    return jsonify({
-        'api_base': os.environ.get('API_BASE', '')
-    })
+    return jsonify({"api_base": os.environ.get("API_BASE", "")})
