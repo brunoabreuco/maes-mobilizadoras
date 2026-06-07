@@ -118,16 +118,6 @@
       console.error('An error occurred while retrieving token. ', err);
     }
   }
-  // 4. Handle token refresh
-  messaging.onTokenRefresh(async () => {
-    try {
-      const refreshedToken = await messaging.getToken();
-      console.log('Token refreshed.');
-      await registerToken(refreshedToken);
-    } catch (err) {
-      console.error('Unable to retrieve refreshed token ', err);
-    }
-  });
 
   // 5. Handle foreground messages
   messaging.onMessage((payload) => {
@@ -143,11 +133,6 @@
     }
   });
 
-  // 6. Trigger permission request if user is logged in
-  if (localStorage.getItem('access_token')) {
-    // We might want to delay this or trigger it on a user action
-    // for better UX, but for now we'll try to get it on load.
-    requestPermissionAndGetToken();
-  }
+  window.requestPermissionAndGetToken = requestPermissionAndGetToken;
 
 })();

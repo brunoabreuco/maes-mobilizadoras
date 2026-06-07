@@ -43,9 +43,13 @@ window.addEventListener('load', async () => {
   mount.innerHTML = '';
 
   for (let evento of eventos) {
-    mount.appendChild(
-      await make('componenteEventoDetalhado', evento)
-    );
+    const comp = await make('componenteEventoDetalhado', evento);
+    comp.addEventListener('click', function () {
+      if (localStorage.getItem('access_token')) {
+        requestPermissionAndGetToken();
+      }
+    });
+    mount.appendChild(comp);
   }
 
 });
