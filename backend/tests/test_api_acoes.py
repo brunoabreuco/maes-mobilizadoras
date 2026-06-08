@@ -253,56 +253,9 @@ def test_rate_limiting(client, base_data):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/acoes (lista paginada)
-# ---------------------------------------------------------------------------
-
-def test_list_acoes_retorna_eventos_existentes(client, app, base_data):
-    """TESTE: GET /api/acoes retorna lista com ações existentes"""
-    _create_event(app, base_data["organizadora_id"], base_data["category_id"], title="Ação A")
-    _create_event(app, base_data["organizadora_id"], base_data["category_id"], title="Ação B")
-
-    headers = _auth_headers(base_data["organizadora_id"], "organizadora")
-    response = client.get("/api/acoes", headers=headers)
-
-    assert response.status_code == 200
-    body = response.get_json()
-    assert "items" in body
-    assert "pagination" in body
-    assert len(body["items"]) == 2
-    assert body["pagination"]["total"] == 2
-    titles = {item["data"]["title"] for item in body["items"]}
-    assert titles == {"Ação A", "Ação B"}
-
-
-def test_list_acoes_sem_resultados_retorna_lista_vazia(client, app, base_data):
-    """TESTE: GET /api/acoes sem eventos retorna 200 com lista vazia"""
-    headers = _auth_headers(base_data["organizadora_id"], "organizadora")
-    response = client.get("/api/acoes", headers=headers)
-
-    assert response.status_code == 200
-    body = response.get_json()
-    assert body["items"] == []
-    assert body["pagination"]["total"] == 0
-
-
-def test_list_acoes_filtro_status(client, app, base_data):
-    """TESTE: GET /api/acoes com filtro de status retorna apenas ações do status informado"""
-    _create_event(app, base_data["organizadora_id"], base_data["category_id"], status="draft")
-    _create_event(app, base_data["organizadora_id"], base_data["category_id"], status="active")
-    _create_event(app, base_data["organizadora_id"], base_data["category_id"], status="active")
-
-    headers = _auth_headers(base_data["organizadora_id"], "organizadora")
-    response = client.get("/api/acoes?status=active", headers=headers)
-
-    assert response.status_code == 200
-    body = response.get_json()
-    assert body["pagination"]["total"] == 2
-    assert all(item["data"]["status"] == "active" for item in body["items"])
-
-
-# ---------------------------------------------------------------------------
 # GET /api/acoes/<id>
 # ---------------------------------------------------------------------------
+
 
 def test_get_acao_retorna_correta(client, app, base_data):
     """TESTE: GET /api/acoes/<id> retorna a ação correta"""

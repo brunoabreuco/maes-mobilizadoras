@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import hashlib
 from flask import Blueprint, g, jsonify, request, current_app
 from pydantic import ValidationError
@@ -6,7 +7,14 @@ from datetime import datetime
 from sqlalchemy.orm import joinedload
 
 from maes_mobilizadoras.limiter import limiter
-from maes_mobilizadoras.models import Event, User, db
+from maes_mobilizadoras.models import (
+    Event,
+    User,
+    db,
+    FCMToken,
+    EventParticipation,
+    Notification,
+)
 from maes_mobilizadoras.schemas import (
     AcaoData,
     AcaoMetadata,
@@ -16,9 +24,11 @@ from maes_mobilizadoras.schemas import (
     AcaoListResponse,
     ActiveFilters,
     CAMPOS_BLOQUEADOS_PATCH,
+    FCMTokenRegister,
     PhoneConfirmRequest,
     UserResponse,
     UserUpdateRequest,
+    CustomNotificationRequest,
 )
 from maes_mobilizadoras.auth import (
     decode_token,
@@ -30,6 +40,7 @@ from maes_mobilizadoras.auth import (
     verify_otp,
     verify_supabase_token,
 )
+from maes_mobilizadoras.notifications import send_to_user, FIREBASE_CONF
 from maes_mobilizadoras.acoes_filter import build_event_filters
 
 api = Blueprint("api", __name__, url_prefix="/api")
@@ -43,11 +54,13 @@ def _pydantic_errors_to_dict(exc: ValidationError) -> dict:
         errors[field] = err["msg"]
     return errors
 
+
 def _get_user_or_404(user_id: str):
     user = db.session.get(User, user_id)
     if not user or not user.is_active:
         return None
     return user
+
 
 def _anonymize(user: User) -> None:
     """Substitui dados pessoais por valores anonimos. phone e full_name sao NOT NULL."""
@@ -95,6 +108,7 @@ def _event_to_dict(ev) -> dict:
 # ENDPOINTS DE AÇÕES COMUNITÁRIAS
 # =============================================================================
 
+
 @api.route("/acoes", methods=["POST"])
 @limiter.limit("10 per minute")
 @require_minimum_role("organizadora")
@@ -125,57 +139,6 @@ def create_acao():
     )
 
     return jsonify(response_model.model_dump(mode="json")), 201
-
-
-@api.route("/acoes", methods=["GET"])
-@require_auth
-def list_acoes():
-    """Lista ações com paginação e filtros opcionais.
-
-    Query params:
-      page        int  (default 1)
-      page_size   int  (default 20, max 100)
-      status      str  filtra por status exato
-      category_id int  filtra por categoria
-      organizer_id str filtra por organizadora
-    """
-    page = max(request.args.get("page", 1, type=int), 1)
-    page_size = min(max(request.args.get("page_size", 20, type=int), 1), 100)
-
-    status_filter = request.args.get("status")
-    category_id_filter = request.args.get("category_id", type=int)
-    organizer_id_filter = request.args.get("organizer_id")
-
-    query = db.session.query(Event)
-
-    if status_filter:
-        query = query.filter(Event.status == status_filter)
-    if category_id_filter is not None:
-        query = query.filter(Event.category_id == category_id_filter)
-    if organizer_id_filter:
-        query = query.filter(Event.organizer_id == organizer_id_filter)
-
-    total = query.count()
-    events = query.offset((page - 1) * page_size).limit(page_size).all()
-    pages = -(-total // page_size) if total > 0 else 0  # divisão com teto
-
-    items = [
-        AcaoResponse(
-            data=AcaoData.model_validate(e),
-            metadata=AcaoMetadata.model_validate(e),
-        ).model_dump(mode="json")
-        for e in events
-    ]
-
-    return jsonify({
-        "items": items,
-        "pagination": {
-            "page": page,
-            "page_size": page_size,
-            "total": total,
-            "pages": pages,
-        },
-    }), 200
 
 
 @api.route("/acoes/<event_id>", methods=["GET"])
@@ -259,6 +222,79 @@ def delete_acao(event_id):
     return "", 204
 
 
+
+@api.post("/acoes/<string:event_id>/notify")
+@require_auth
+@limiter.limit("10 per minute")
+def notify_event_participants(event_id):
+    req_data = request.get_json(silent=True)
+    if not req_data:
+        return jsonify({"error": "Body deve ser JSON válido"}), 400
+
+    try:
+        payload = CustomNotificationRequest(**req_data)
+    except ValidationError as e:
+        return jsonify({"errors": _pydantic_errors_to_dict(e)}), 400
+
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({"error": "Evento não encontrado"}), 404
+
+    # Verify that the current user is the event's organizer
+    if event.organizer_id != g.current_user_id:
+        return jsonify(
+            {
+                "error": "Acesso negado: apenas o organizador do evento pode enviar notificações"
+            }
+        ), 403
+
+    # Fetch all participants of the event who are not cancelled
+    participations = EventParticipation.query.filter(
+        EventParticipation.event_id == event_id,
+        EventParticipation.status != "cancelled",
+    ).all()
+
+    # Create the Notification record
+    try:
+        new_notification = Notification(
+            event_id=event.id,
+            sender_id=g.current_user_id,
+            type="broadcast",
+            title=payload.title,
+            message=payload.message,
+            target_role="participante",
+            sent_at=datetime.now(timezone.utc),
+        )
+        db.session.add(new_notification)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        db.session.rollback()
+        return jsonify({"error": "Falha ao registrar notificação"}), 500
+
+    # Send push notifications using firebase messaging
+    success_count = 0
+    for participation in participations:
+        success_count += send_to_user(
+            user_id=participation.user_id,
+            title=payload.title,
+            body=payload.message,
+            data={
+                "event_id": str(event.id),
+                "notification_id": str(new_notification.id),
+            },
+        )
+
+    return jsonify(
+        {
+            "message": "Notificações enviadas com sucesso",
+            "notification_id": str(new_notification.id),
+            "recipients_count": len(participations),
+            "successful_sends": success_count,
+        }
+    ), 201
+
+
 # =============================================================================
 # ENDPOINT DE PERFIL
 # =============================================================================
@@ -268,7 +304,7 @@ def get_me():
     user = _get_user_or_404(g.current_user_id)
     if not user:
         return jsonify({"error": "Usuária não encontrada"}), 404
-    return jsonify(UserResponse.model_validate(user).model_dump()), 200
+    return jsonify(UserResponse.model_validate(user).model_dump(mode="json")), 200
 
 
 @api.patch("/me")
@@ -317,10 +353,12 @@ def update_me():
         return jsonify({"error": "Falha ao salvar alterações"}), 500
 
     status = 202 if phone_change_pending else 200
-    return jsonify({
-        "profile": UserResponse.model_validate(user).model_dump(),
-        "phone_change_pending": phone_change_pending,
-    }), status
+    return jsonify(
+        {
+            "profile": UserResponse.model_validate(user).model_dump(mode="json"),
+            "phone_change_pending": phone_change_pending,
+        }
+    ), status
 
 
 @api.post("/me/phone/confirm")
@@ -342,11 +380,13 @@ def confirm_phone():
 
     try:
         supabase = current_app.extensions["supabase"]
-        supabase.auth.verify_otp({
-            "phone": user.pending_phone,
-            "token": payload.token,
-            "type": "sms",
-        })
+        supabase.auth.verify_otp(
+            {
+                "phone": user.pending_phone,
+                "token": payload.token,
+                "type": "sms",
+            }
+        )
     except Exception:
         return jsonify({"error": "OTP inválido ou expirado"}), 401
 
@@ -360,7 +400,7 @@ def confirm_phone():
         db.session.rollback()
         return jsonify({"error": "Falha ao salvar novo telefone"}), 500
 
-    return jsonify(UserResponse.model_validate(user).model_dump()), 200
+    return jsonify(UserResponse.model_validate(user).model_dump(mode="json")), 200
 
 
 @api.delete("/me")
@@ -389,9 +429,46 @@ def delete_me():
 
     return "", 204
 
+
+@api.post("/me/fcm-token")
+@require_auth
+def register_fcm_token():
+    body = request.get_json(silent=True) or {}
+    try:
+        payload = FCMTokenRegister(**body)
+    except ValidationError as e:
+        return jsonify({"errors": _pydantic_errors_to_dict(e)}), 400
+
+    # Upsert token
+    fcm_token = FCMToken.query.filter_by(token=payload.token).first()
+    if fcm_token:
+        fcm_token.user_id = g.current_user_id
+        fcm_token.device_type = payload.device_type
+        fcm_token.is_active = True
+        fcm_token.last_used_at = db.func.now()
+    else:
+        fcm_token = FCMToken(
+            user_id=g.current_user_id,
+            token=payload.token,
+            device_type=payload.device_type,
+            last_used_at=db.func.now(),
+        )
+        db.session.add(fcm_token)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        db.session.rollback()
+        return jsonify({"error": "token_save_failure"}), 500
+
+    return jsonify({"message": "token_registered"}), 200
+
+
 # =============================================================================
 # ENDPOINT DE AUTENTICAÇÃO OTP E GOOGLE
 # =============================================================================
+
 
 @auth_bp.post("/otp/request")
 def otp_request():
@@ -424,10 +501,12 @@ def otp_verify():
         return jsonify({"error": str(exc)}), 401
 
     tokens = issue_tokens(str(user.id), user.role)
-    return jsonify({
-        **tokens,
-        "user": {"id": str(user.id), "role": user.role},
-    }), 200
+    return jsonify(
+        {
+            **tokens,
+            "user": {"id": str(user.id), "role": user.role},
+        }
+    ), 200
 
 
 @auth_bp.post("/google/exchange")
@@ -452,10 +531,12 @@ def google_exchange():
 
     user = get_or_create_profile(user_id, full_name=full_name)
     tokens = issue_tokens(str(user.id), user.role)
-    return jsonify({
-        **tokens,
-        "user": {"id": str(user.id), "role": user.role},
-    }), 200
+    return jsonify(
+        {
+            **tokens,
+            "user": {"id": str(user.id), "role": user.role},
+        }
+    ), 200
 
 
 @auth_bp.post("/refresh")
@@ -575,8 +656,11 @@ def list_acoes():
 # =============================================================================
 # INJEÇÃO DO ENV NO FRONTEND
 # =============================================================================
-@api.get('/config')
+@api.get("/config")
 def frontend_config():
-    return jsonify({
-        'api_base': os.environ.get('API_BASE', '')
-    })
+    return jsonify(
+        {
+            "api_base": os.environ.get("API_BASE", ""),
+            "firebase": FIREBASE_CONF,
+        }
+    )

@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from uuid import UUID
 from decimal import Decimal
 from typing import Literal, Optional
 
@@ -64,7 +65,7 @@ class AcaoPatchRequest(BaseModel):
 
 
 class AcaoMetadata(BaseModel):
-    id: str
+    id: str | UUID
     participant_count: int
     created_at: datetime
     updated_at: datetime
@@ -121,7 +122,7 @@ class AcaoListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=False)
 
 class UserResponse(BaseModel):
-    id: str
+    id: str | UUID
     phone: str
     full_name: str
     neighborhood: Optional[str] = None
@@ -150,6 +151,14 @@ class PhoneConfirmRequest(BaseModel):
     token: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
+class FCMTokenRegister(BaseModel):
+    token: str
+    device_type: Optional[Literal["android", "ios", "web"]] = None
+
+
+class CustomNotificationRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=150)
+    message: str = Field(..., min_length=1, max_length=300)
 class RoleUpdateRequest(BaseModel):
     """Body do PATCH /admin/users/:id/role."""
     role: ROLE_VALUES

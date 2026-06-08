@@ -212,6 +212,7 @@ def get_or_create_profile(
         )
         db.session.add(user)
         db.session.commit()
+        db.session.refresh(user)
     return user
 
 
