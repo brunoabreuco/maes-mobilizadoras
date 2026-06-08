@@ -81,6 +81,44 @@ class AcaoResponse(BaseModel):
 
 CAMPOS_IMUTAVEIS = {"role", "id"}
 
+class AcaoListItem(BaseModel):
+    """Representacao de um evento na listagem. Inclui dados de categoria e organizador
+    para que o frontend nao precise de chamadas adicionais."""
+ 
+    id: str
+    title: str
+    description: Optional[str] = None
+    event_datetime: datetime
+    location_name: str
+    category_id: int
+    category_name: Optional[str] = None
+    organizer_id: str
+    organizer_name: Optional[str] = None
+    status: str
+    participant_count: int
+    cover_image_url: Optional[str] = None
+ 
+    model_config = ConfigDict(from_attributes=False)
+ 
+ 
+class ActiveFilters(BaseModel):
+    """Filtros ativos retornados no response para o frontend reconstruir a URL."""
+ 
+    q: Optional[str] = None
+    categoria: Optional[int] = None
+    de: Optional[str] = None
+    ate: Optional[str] = None
+    responsavel: Optional[str] = None
+ 
+ 
+class AcaoListResponse(BaseModel):
+    data: list[AcaoListItem]
+    total: int
+    page: int
+    per_page: int
+    filters: ActiveFilters
+ 
+    model_config = ConfigDict(from_attributes=False)
 
 class UserResponse(BaseModel):
     id: str
