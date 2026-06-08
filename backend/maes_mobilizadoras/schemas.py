@@ -8,8 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 STATUS_VALUES = Literal["draft", "scheduled", "active", "cancelled"]
 
-# Campos que PATCH nunca pode alterar. A verificação é feita na rota
-# (não no Pydantic) para que o erro seja retornado por campo, não como "geral".
+ROLE_VALUES = Literal["participante", "organizadora", "coordenadora"]
+
 CAMPOS_BLOQUEADOS_PATCH = frozenset({"organizer_id", "participant_count"})
 
 
@@ -39,9 +39,6 @@ class AcaoData(BaseModel):
 
 
 class AcaoPatchRequest(BaseModel):
-    """Schema para PATCH parcial. Todos os campos são opcionais.
-    organizer_id e participant_count são bloqueados na camada de rota."""
-
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     event_datetime: Optional[datetime] = None
@@ -85,6 +82,44 @@ class AcaoResponse(BaseModel):
 
 CAMPOS_IMUTAVEIS = {"role", "id"}
 
+class AcaoListItem(BaseModel):
+    """Representacao de um evento na listagem. Inclui dados de categoria e organizador
+    para que o frontend nao precise de chamadas adicionais."""
+ 
+    id: str
+    title: str
+    description: Optional[str] = None
+    event_datetime: datetime
+    location_name: str
+    category_id: int
+    category_name: Optional[str] = None
+    organizer_id: str
+    organizer_name: Optional[str] = None
+    status: str
+    participant_count: int
+    cover_image_url: Optional[str] = None
+ 
+    model_config = ConfigDict(from_attributes=False)
+ 
+ 
+class ActiveFilters(BaseModel):
+    """Filtros ativos retornados no response para o frontend reconstruir a URL."""
+ 
+    q: Optional[str] = None
+    categoria: Optional[int] = None
+    de: Optional[str] = None
+    ate: Optional[str] = None
+    responsavel: Optional[str] = None
+ 
+ 
+class AcaoListResponse(BaseModel):
+    data: list[AcaoListItem]
+    total: int
+    page: int
+    per_page: int
+    filters: ActiveFilters
+ 
+    model_config = ConfigDict(from_attributes=False)
 
 class UserResponse(BaseModel):
     id: str | UUID
@@ -124,3 +159,19 @@ class FCMTokenRegister(BaseModel):
 class CustomNotificationRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=150)
     message: str = Field(..., min_length=1, max_length=300)
+class RoleUpdateRequest(BaseModel):
+    """Body do PATCH /admin/users/:id/role."""
+    role: ROLE_VALUES
+
+
+class UserAdminResponse(BaseModel):
+    """Perfil retornado na listagem e alteração administrativa."""
+    id: str
+    full_name: str
+    phone: str
+    neighborhood: Optional[str] = None
+    role: str
+    is_active: bool
+    avatar_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)

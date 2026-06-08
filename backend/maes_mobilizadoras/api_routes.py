@@ -3,6 +3,8 @@ import hashlib
 from flask import Blueprint, g, jsonify, request, current_app
 from pydantic import ValidationError
 import os
+from datetime import datetime
+from sqlalchemy.orm import joinedload
 
 from maes_mobilizadoras.limiter import limiter
 from maes_mobilizadoras.models import (
@@ -18,6 +20,9 @@ from maes_mobilizadoras.schemas import (
     AcaoMetadata,
     AcaoPatchRequest,
     AcaoResponse,
+    AcaoListItem,
+    AcaoListResponse,
+    ActiveFilters,
     CAMPOS_BLOQUEADOS_PATCH,
     FCMTokenRegister,
     PhoneConfirmRequest,
@@ -31,10 +36,12 @@ from maes_mobilizadoras.auth import (
     issue_tokens,
     request_otp,
     require_auth,
+    require_minimum_role,
     verify_otp,
     verify_supabase_token,
 )
 from maes_mobilizadoras.notifications import send_to_user, FIREBASE_CONF
+from maes_mobilizadoras.acoes_filter import build_event_filters
 
 api = Blueprint("api", __name__, url_prefix="/api")
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -65,6 +72,37 @@ def _anonymize(user: User) -> None:
     user.phone = "del_" + hashlib.sha256(user.phone.encode()).hexdigest()[:15]
     user.is_active = False
 
+# ---------------------------------------------------------------------------
+# Helpers privados de acoes_filter
+# ---------------------------------------------------------------------------
+ 
+def _parse_date_param(value: str | None) -> datetime | None:
+    """Converte string YYYY-MM-DD em datetime. Retorna None se vazio."""
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value.strip(), "%Y-%m-%d")
+    except ValueError:
+        return None  # sinaliza erro para a rota tratar
+ 
+ 
+def _event_to_dict(ev) -> dict:
+    """Serializa um Event ORM (com category e organizer carregados) para dict."""
+    return {
+        "id": ev.id,
+        "title": ev.title,
+        "description": ev.description,
+        "event_datetime": ev.event_datetime,
+        "location_name": ev.location_name,
+        "category_id": ev.category_id,
+        "category_name": ev.category.name if ev.category else None,
+        "organizer_id": ev.organizer_id,
+        "organizer_name": ev.organizer.full_name if ev.organizer else None,
+        "status": ev.status,
+        "participant_count": ev.participant_count,
+        "cover_image_url": ev.cover_image_url,
+    }
+
 
 # =============================================================================
 # ENDPOINTS DE AÇÕES COMUNITÁRIAS
@@ -73,6 +111,7 @@ def _anonymize(user: User) -> None:
 
 @api.route("/acoes", methods=["POST"])
 @limiter.limit("10 per minute")
+@require_minimum_role("organizadora")
 def create_acao():
     req_data = request.get_json(silent=True)
     if not req_data:
@@ -168,7 +207,7 @@ def get_acao(event_id):
 
 
 @api.route("/acoes/<event_id>", methods=["PATCH"])
-@require_auth
+@require_minimum_role("organizadora")
 def update_acao(event_id):
     body = request.get_json(silent=True)
     if not body:
@@ -188,6 +227,9 @@ def update_acao(event_id):
     event = db.session.get(Event, event_id)
     if event is None:
         return jsonify({"error": "Ação não encontrada"}), 404
+    
+    if g.current_user.role != "coordenadora" and event.organizer_id != g.current_user_id:
+        return jsonify({"error": "Sem permissão para editar esta ação"}), 403
 
     # exclude_unset=True garante que apenas os campos enviados na requisição
     # são aplicados; campos omitidos não sobrescrevem valores existentes.
@@ -211,13 +253,13 @@ def update_acao(event_id):
 
 
 @api.route("/acoes/<event_id>", methods=["DELETE"])
-@require_auth
+@require_minimum_role("organizadora")
 def delete_acao(event_id):
     event = db.session.get(Event, event_id)
     if event is None:
         return jsonify({"error": "Ação não encontrada"}), 404
 
-    if event.organizer_id != g.current_user_id:
+    if g.current_user.role != "coordenadora" and event.organizer_id != g.current_user_id:
         return jsonify({"error": "Sem permissão para remover esta ação"}), 403
 
     try:
@@ -575,6 +617,92 @@ def logout():
     # Revogação server-side (denylist) fica fora do escopo desta task.
     return jsonify({"message": "logged_out"}), 200
 
+# ---------------------------------------------------------------------------
+# GET /api/acoes
+# ---------------------------------------------------------------------------
+ 
+@api.route("/acoes", methods=["GET"])
+def list_acoes():
+    # --- parse e validacao dos query params ---
+    q = request.args.get("q", "").strip() or None
+ 
+    categoria_raw = request.args.get("categoria")
+    categoria = None
+    if categoria_raw:
+        try:
+            categoria = int(categoria_raw)
+        except ValueError:
+            return jsonify({"error": "categoria deve ser um numero inteiro"}), 400
+ 
+    de_raw = request.args.get("de") or None
+    ate_raw = request.args.get("ate") or None
+ 
+    de = _parse_date_param(de_raw)
+    ate = _parse_date_param(ate_raw)
+ 
+    if de_raw and de is None:
+        return jsonify({"error": "de deve estar no formato YYYY-MM-DD"}), 400
+    if ate_raw and ate is None:
+        return jsonify({"error": "ate deve estar no formato YYYY-MM-DD"}), 400
+ 
+    responsavel = request.args.get("responsavel") or None
+ 
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        per_page = min(100, max(1, int(request.args.get("per_page", 20))))
+    except ValueError:
+        return jsonify({"error": "page e per_page devem ser inteiros positivos"}), 400
+ 
+    # --- query ---
+    from sqlalchemy.orm import joinedload
+    from maes_mobilizadoras.acoes_filter import build_event_filters
+ 
+    filters = build_event_filters(
+        q=q,
+        categoria=categoria,
+        de=de,
+        ate=ate,
+        responsavel=responsavel,
+    )
+ 
+    try:
+        total = db.session.execute(
+            db.select(db.func.count(Event.id)).where(*filters)
+        ).scalar()
+ 
+        events = db.session.execute(
+            db.select(Event)
+            .where(*filters)
+            .options(
+                joinedload(Event.category),
+                joinedload(Event.organizer),
+            )
+            .order_by(Event.event_datetime)
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+        ).unique().scalars().all()
+ 
+    except Exception as e:
+        current_app.logger.exception(e)
+        return jsonify({"error": "Falha ao consultar acoes"}), 500
+ 
+    items = [AcaoListItem(**_event_to_dict(ev)) for ev in events]
+ 
+    response = AcaoListResponse(
+        data=items,
+        total=total,
+        page=page,
+        per_page=per_page,
+        filters=ActiveFilters(
+            q=q,
+            categoria=categoria,
+            de=de_raw,
+            ate=ate_raw,
+            responsavel=responsavel,
+        ),
+    )
+ 
+    return jsonify(response.model_dump(mode="json")), 200
 
 # =============================================================================
 # INJEÇÃO DO ENV NO FRONTEND
