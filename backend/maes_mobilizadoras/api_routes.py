@@ -141,57 +141,6 @@ def create_acao():
     return jsonify(response_model.model_dump(mode="json")), 201
 
 
-@api.route("/acoes", methods=["GET"])
-@require_auth
-def list_acoes():
-    """Lista ações com paginação e filtros opcionais.
-
-    Query params:
-      page        int  (default 1)
-      page_size   int  (default 20, max 100)
-      status      str  filtra por status exato
-      category_id int  filtra por categoria
-      organizer_id str filtra por organizadora
-    """
-    page = max(request.args.get("page", 1, type=int), 1)
-    page_size = min(max(request.args.get("page_size", 20, type=int), 1), 100)
-
-    status_filter = request.args.get("status")
-    category_id_filter = request.args.get("category_id", type=int)
-    organizer_id_filter = request.args.get("organizer_id")
-
-    query = db.session.query(Event)
-
-    if status_filter:
-        query = query.filter(Event.status == status_filter)
-    if category_id_filter is not None:
-        query = query.filter(Event.category_id == category_id_filter)
-    if organizer_id_filter:
-        query = query.filter(Event.organizer_id == organizer_id_filter)
-
-    total = query.count()
-    events = query.offset((page - 1) * page_size).limit(page_size).all()
-    pages = -(-total // page_size) if total > 0 else 0  # divisão com teto
-
-    items = [
-        AcaoResponse(
-            data=AcaoData.model_validate(e),
-            metadata=AcaoMetadata.model_validate(e),
-        ).model_dump(mode="json")
-        for e in events
-    ]
-
-    return jsonify({
-        "items": items,
-        "pagination": {
-            "page": page,
-            "page_size": page_size,
-            "total": total,
-            "pages": pages,
-        },
-    }), 200
-
-
 @api.route("/acoes/<event_id>", methods=["GET"])
 @require_auth
 def get_acao(event_id):
