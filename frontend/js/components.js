@@ -96,12 +96,6 @@ async function make(spec, props) {
   element.classList.add('c-' + spec);
   setProps(element, props);
 
-    if (spec === 'componenteCadastroAvisosEventos') {
-
-    controlarCadastroAvisosEventos(element);
-
-  }
-
   return element;
 }
 
@@ -136,40 +130,40 @@ function loadAllComponents() {
           console.log(window.location.pathname);
 
           switch (tela) {
-              case '/frontend/tela_acoes_comunitarias.html':
-                  icone_inicio.setAttribute('src', './images/footer-icone-inicio-active.svg')
-                  icone_calendario.setAttribute('src', './images/footer-icone-calendario.svg')
-                  icone_avisos.setAttribute('src', './images/footer-icone-avisos.svg')
-                  icone_perfil.setAttribute('src', './images/footer-icone-perfil.svg')
+            case '/frontend/tela_acoes_comunitarias.html':
+              icone_inicio.setAttribute('src', './images/footer-icone-inicio-active.svg')
+              icone_calendario.setAttribute('src', './images/footer-icone-calendario.svg')
+              icone_avisos.setAttribute('src', './images/footer-icone-avisos.svg')
+              icone_perfil.setAttribute('src', './images/footer-icone-perfil.svg')
 
-                  break;
+              break;
 
-              case '/frontend/tela_calendario.html':
-                  icone_inicio.setAttribute('src', './images/footer-icone-inicio.svg')
-                  icone_calendario.setAttribute('src', './images/footer-icone-calendario-active.svg')
-                  icone_avisos.setAttribute('src', './images/footer-icone-avisos.svg')
-                  icone_perfil.setAttribute('src', './images/footer-icone-perfil.svg')
+            case '/frontend/tela_calendario.html':
+              icone_inicio.setAttribute('src', './images/footer-icone-inicio.svg')
+              icone_calendario.setAttribute('src', './images/footer-icone-calendario-active.svg')
+              icone_avisos.setAttribute('src', './images/footer-icone-avisos.svg')
+              icone_perfil.setAttribute('src', './images/footer-icone-perfil.svg')
 
-                  break;
+              break;
 
-              case '/frontend/tela_avisos.html':
-                  icone_inicio.setAttribute('src', './images/footer-icone-inicio.svg')
-                  icone_calendario.setAttribute('src', './images/footer-icone-calendario.svg')
-                  icone_avisos.setAttribute('src', './images/footer-icone-avisos-active.svg')
-                  icone_perfil.setAttribute('src', './images/footer-icone-perfil.svg')
+            case '/frontend/tela_avisos.html':
+              icone_inicio.setAttribute('src', './images/footer-icone-inicio.svg')
+              icone_calendario.setAttribute('src', './images/footer-icone-calendario.svg')
+              icone_avisos.setAttribute('src', './images/footer-icone-avisos-active.svg')
+              icone_perfil.setAttribute('src', './images/footer-icone-perfil.svg')
 
-                  break;
+              break;
 
-              case '/frontend/tela_meu_perfil.html':
-                  icone_inicio.setAttribute('src', './images/footer-icone-inicio.svg')
-                  icone_calendario.setAttribute('src', './images/footer-icone-calendario.svg')
-                  icone_avisos.setAttribute('src', './images/footer-icone-avisos.svg')
-                  icone_perfil.setAttribute('src', './images/footer-icone-perfil-active.svg')
-                  
-                  break;
+            case '/frontend/tela_meu_perfil.html':
+              icone_inicio.setAttribute('src', './images/footer-icone-inicio.svg')
+              icone_calendario.setAttribute('src', './images/footer-icone-calendario.svg')
+              icone_avisos.setAttribute('src', './images/footer-icone-avisos.svg')
+              icone_perfil.setAttribute('src', './images/footer-icone-perfil-active.svg')
 
-              default:
-                  break;
+              break;
+
+            default:
+              break;
 
           }
         }
@@ -194,8 +188,8 @@ function controlarCadastroAvisosEventos(element) {
   const tituloModal = element.querySelector('.header h2');
   const botaoAviso = element.querySelector('#botao-aviso');
   const botaoFooter = element.querySelector('#confirmar-presenca');
-  
-  
+
+
 
   // começa tudo fechado
   container.style.display = 'none';
@@ -208,91 +202,91 @@ function controlarCadastroAvisosEventos(element) {
   let modalAtual = null;
 
   function abrirModal(tipo) {
-  modalAtual = tipo;
+    modalAtual = tipo;
 
-  container.style.display = 'flex';
+    container.style.display = 'flex';
 
-  criarEvento.style.display = 'none';
-  criarAviso.style.display = 'none';
-  adicionarMobilizadora.style.display = 'none';
-  detalhesEvento.style.display = 'none';
+    criarEvento.style.display = 'none';
+    criarAviso.style.display = 'none';
+    adicionarMobilizadora.style.display = 'none';
+    detalhesEvento.style.display = 'none';
 
-  document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
 
-  // título
-  if (tituloModal) {
-    if (tipo === 'detalhes-evento') tituloModal.innerText = 'Detalhes do Evento';
-    if (tipo === 'criar-evento') tituloModal.innerText = 'Criar Evento';
-    if (tipo === 'criar-aviso') tituloModal.innerText = 'Criar Aviso';
-    if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
+    // título
+    if (tituloModal) {
+      if (tipo === 'detalhes-evento') tituloModal.innerText = 'Detalhes do Evento';
+      if (tipo === 'criar-evento') tituloModal.innerText = 'Criar Evento';
+      if (tipo === 'criar-aviso') tituloModal.innerText = 'Criar Aviso';
+      if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
+    }
+
+    // footer button text
+    if (botaoFooter) {
+      if (tipo === 'criar-evento') botaoFooter.innerText = 'Criar Evento';
+      if (tipo === 'criar-aviso') botaoFooter.innerText = 'Enviar Aviso';
+      if (tipo === 'adicionar-mobilizadora') botaoFooter.innerText = 'Adicionar Mobilizadora';
+      if (tipo === 'detalhes-evento') botaoFooter.innerText = 'Confirmar Presença';
+    }
+
+    // mostrar seção certa
+    if (tipo === 'criar-evento') criarEvento.style.display = 'block';
+    if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
+    if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
+    if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
   }
-
-  // footer button text
-  if (botaoFooter) {
-    if (tipo === 'criar-evento') botaoFooter.innerText = 'Criar Evento';
-    if (tipo === 'criar-aviso') botaoFooter.innerText = 'Enviar Aviso';
-    if (tipo === 'adicionar-mobilizadora') botaoFooter.innerText = 'Adicionar Mobilizadora';
-    if (tipo === 'detalhes-evento') botaoFooter.innerText = 'Confirmar Presença';
-  }
-
-  // mostrar seção certa
-  if (tipo === 'criar-evento') criarEvento.style.display = 'block';
-  if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
-  if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
-  if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
-}
 
   // para criar um novo evento (página de ações comunitárias)
-const nome_evento = element.querySelector('#nome-evento')
-const tipo_evento = element.querySelector('#tipo-evento')
-const data_evento = element.querySelector('#data')
-const horario_evento = element.querySelector('#horario')
-const local_evento = element.querySelector('#local-evento')
-const descricao_evento = element.querySelector('#descricao-novo-evento')
+  const nome_evento = element.querySelector('#nome-evento')
+  const tipo_evento = element.querySelector('#tipo-evento')
+  const data_evento = element.querySelector('#data')
+  const horario_evento = element.querySelector('#horario')
+  const local_evento = element.querySelector('#local-evento')
+  const descricao_evento = element.querySelector('#descricao-novo-evento')
 
-// para criar novo aviso (página de perfil)
-const evento_escolhido = element.querySelector('#tipo-evento-ja-existente')
-const mensagem_aviso_novo = element.querySelector('#descricao-novo-aviso')
+  // para criar novo aviso (página de perfil)
+  const evento_escolhido = element.querySelector('#tipo-evento-ja-existente')
+  const mensagem_aviso_novo = element.querySelector('#descricao-novo-aviso')
 
-// para adicionar mobilizadora (página de perfil)
-const telefone_mobilizadora = element.querySelector('#telefone-mobilizadora')
+  // para adicionar mobilizadora (página de perfil)
+  const telefone_mobilizadora = element.querySelector('#telefone-mobilizadora')
 
 
-// vamos usar o botaoFooter, declarado no começo do documento.
+  // vamos usar o botaoFooter, declarado no começo do documento.
 
-botaoFooter.addEventListener('click', async() => {
-  
-  switch (modalAtual) {
-              case 'criar-evento':
-                  const novo_evento = {
-                    titulo: nome_evento.value,
-                    tipo: tipo_evento.value,
-                    data: data_evento.value,
-                    hora: horario_evento.value,
-                    local: local_evento.value,
-                    descricao: descricao_evento.value
-                  }
-                  await criarEvento(novo_evento);
-                  break;
+  botaoFooter.addEventListener('click', async () => {
 
-              case 'criar-aviso':
-                  const novo_aviso = {
-                    evento_escolhido_value: evento_escolhido.value,
-                    mensagem_aviso_novo_value: mensagem_aviso_novo.value
-                  }
+    switch (modalAtual) {
+      case 'criar-evento':
+        const novo_evento = {
+          titulo: nome_evento.value,
+          tipo: tipo_evento.value,
+          data: data_evento.value,
+          hora: horario_evento.value,
+          local: local_evento.value,
+          descricao: descricao_evento.value
+        }
+        await criarEvento(novo_evento);
+        break;
 
-                  break;
+      case 'criar-aviso':
+        const novo_aviso = {
+          evento_escolhido_value: evento_escolhido.value,
+          mensagem_aviso_novo_value: mensagem_aviso_novo.value
+        }
 
-              case 'adicionar-mobilizadora':
-                  const telefone_mobilizadora_value = telefone_mobilizadora.value
-                  
-                  break;
+        break;
 
-              default:
-                  break;
-  }
-  fecharModal();
-})
+      case 'adicionar-mobilizadora':
+        const telefone_mobilizadora_value = telefone_mobilizadora.value
+
+        break;
+
+      default:
+        break;
+    }
+    fecharModal();
+  })
 
   function fecharModal() {
     container.style.display = 'none';
@@ -326,7 +320,7 @@ botaoFooter.addEventListener('click', async() => {
 
   // BOTÃO +
   // ⚠️ IMPORTANTE: está fora do componente, então usamos document
-  const botaoAdicionarEvento = document.querySelector('[style*="icone-adicionar-evento"]') 
+  const botaoAdicionarEvento = document.querySelector('[style*="icone-adicionar-evento"]')
     || document.querySelector('button img[src*="icone-adicionar-evento"]')?.parentElement;
 
   if (botaoAdicionarEvento) {
@@ -336,22 +330,22 @@ botaoFooter.addEventListener('click', async() => {
 
   const pagina = window.location.pathname;
   // ESCONDE O BOTÃO DE AVISO NO MODAL NA TELA DE PERFIL
-if (pagina.includes('tela_meu_perfil')) {
-  if (botaoAviso) {
-    botaoAviso.style.display = 'none';
+  if (pagina.includes('tela_meu_perfil')) {
+    if (botaoAviso) {
+      botaoAviso.style.display = 'none';
+    }
   }
-}
 
-document.addEventListener('click', (e) => {
-  const evento = e.target.closest('.conteudo');
+  document.addEventListener('click', (e) => {
+    const evento = e.target.closest('.conteudo');
 
-  if (!evento) return;
+    if (!evento) return;
 
-  // evita clicar em botões internos
-  if (e.target.closest('button')) return;
+    // evita clicar em botões internos
+    if (e.target.closest('button')) return;
 
-  abrirModal('detalhes-evento');
-});
+    abrirModal('detalhes-evento');
+  });
 
 }
 

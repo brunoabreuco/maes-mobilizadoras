@@ -135,9 +135,17 @@
                 </select>
                 <br>
 
-                <label for="msg-aviso">Mensagem do Aviso</label><br>
+                <div class="titulo-aviso">
+                <label for="titulo-aviso">Título do Aviso</label><br>
+                    <input type="text" id="titulo-novo-aviso" placeholder="Lembrete"/>
+                    <button id="input-text-btn">
+                        <img src="./images/icone-microfone-verde.svg">
+                    </button>
+                </div>
+
+                <label for="msg-aviso">Corpo do Aviso</label><br>
                 <div class="msg-aviso">
-                    <textarea id="descricao-novo-aviso" name="userReview" placeholder="Ex: Lembrete importante! Não esqueça de trazer seus materiais..." cols="100" rows="6"></textarea>
+                    <textarea id="descricao-novo-aviso" placeholder="Ex: Lembrete importante! Não esqueça de trazer seus materiais..." cols="100" rows="6"></textarea>
                     <button id="textarea-btn">
                         <img src="./images/icone-microfone-verde.svg">
                     </button>
