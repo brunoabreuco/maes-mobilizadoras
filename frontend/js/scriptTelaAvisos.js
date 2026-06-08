@@ -23,7 +23,13 @@ async function carregarAvisos() {
   const mount = document.getElementById('lista-avisos');
   mount.innerHTML = "";
   for (let aviso of avisos) {
-    mount.appendChild(await make('componenteAviso', aviso));
+    const comp = await make('componenteAviso', aviso);
+    comp.addEventListener('click', function () {
+      if (localStorage.getItem('access_token')) {
+        requestPermissionAndGetToken();
+      }
+    });
+    mount.appendChild(comp);
   }
 }
 

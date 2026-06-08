@@ -5,7 +5,7 @@
 (async () => {
 
 const { api_base: API_BASE } = await fetch('/api/config').then(r => r.json());
-const REDIRECT_APOS_LOGIN = '/home.html';
+const REDIRECT_APOS_LOGIN = '/tela_acoes_comunitarias.html';
 
 // ============================================================
 // GERENCIAMENTO DE TOKENS

@@ -1,17 +1,34 @@
+from datetime import datetime, timezone
 import hashlib
 from flask import Blueprint, g, jsonify, request, current_app
 from pydantic import ValidationError
 import os
+from datetime import datetime
+from sqlalchemy.orm import joinedload
 
 from maes_mobilizadoras.limiter import limiter
-from maes_mobilizadoras.models import Event, User, db
+from maes_mobilizadoras.models import (
+    Event,
+    User,
+    db,
+    FCMToken,
+    EventParticipation,
+    Notification,
+)
 from maes_mobilizadoras.schemas import (
     AcaoData,
     AcaoMetadata,
+    AcaoPatchRequest,
     AcaoResponse,
+    AcaoListItem,
+    AcaoListResponse,
+    ActiveFilters,
+    CAMPOS_BLOQUEADOS_PATCH,
+    FCMTokenRegister,
     PhoneConfirmRequest,
     UserResponse,
     UserUpdateRequest,
+    CustomNotificationRequest,
 )
 from maes_mobilizadoras.auth import (
     decode_token,
@@ -19,9 +36,12 @@ from maes_mobilizadoras.auth import (
     issue_tokens,
     request_otp,
     require_auth,
+    require_minimum_role,
     verify_otp,
     verify_supabase_token,
 )
+from maes_mobilizadoras.notifications import send_to_user, FIREBASE_CONF
+from maes_mobilizadoras.acoes_filter import build_event_filters
 
 api = Blueprint("api", __name__, url_prefix="/api")
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -34,11 +54,13 @@ def _pydantic_errors_to_dict(exc: ValidationError) -> dict:
         errors[field] = err["msg"]
     return errors
 
+
 def _get_user_or_404(user_id: str):
     user = db.session.get(User, user_id)
     if not user or not user.is_active:
         return None
     return user
+
 
 def _anonymize(user: User) -> None:
     """Substitui dados pessoais por valores anonimos. phone e full_name sao NOT NULL."""
@@ -50,13 +72,46 @@ def _anonymize(user: User) -> None:
     user.phone = "del_" + hashlib.sha256(user.phone.encode()).hexdigest()[:15]
     user.is_active = False
 
+# ---------------------------------------------------------------------------
+# Helpers privados de acoes_filter
+# ---------------------------------------------------------------------------
+ 
+def _parse_date_param(value: str | None) -> datetime | None:
+    """Converte string YYYY-MM-DD em datetime. Retorna None se vazio."""
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value.strip(), "%Y-%m-%d")
+    except ValueError:
+        return None  # sinaliza erro para a rota tratar
+ 
+ 
+def _event_to_dict(ev) -> dict:
+    """Serializa um Event ORM (com category e organizer carregados) para dict."""
+    return {
+        "id": ev.id,
+        "title": ev.title,
+        "description": ev.description,
+        "event_datetime": ev.event_datetime,
+        "location_name": ev.location_name,
+        "category_id": ev.category_id,
+        "category_name": ev.category.name if ev.category else None,
+        "organizer_id": ev.organizer_id,
+        "organizer_name": ev.organizer.full_name if ev.organizer else None,
+        "status": ev.status,
+        "participant_count": ev.participant_count,
+        "cover_image_url": ev.cover_image_url,
+    }
+
 
 # =============================================================================
-# ENDPOINT DE AÇÕES COMUNITÁRIAS
+# ENDPOINTS DE AÇÕES COMUNITÁRIAS
 # =============================================================================
+
 
 @api.route("/acoes", methods=["POST"])
 @limiter.limit("10 per minute")
+@require_minimum_role("organizadora")
 def create_acao():
     req_data = request.get_json(silent=True)
     if not req_data:
@@ -85,6 +140,161 @@ def create_acao():
 
     return jsonify(response_model.model_dump(mode="json")), 201
 
+
+@api.route("/acoes/<event_id>", methods=["GET"])
+@require_auth
+def get_acao(event_id):
+    event = db.session.get(Event, event_id)
+    if event is None:
+        return jsonify({"error": "Ação não encontrada"}), 404
+
+    response_model = AcaoResponse(
+        data=AcaoData.model_validate(event),
+        metadata=AcaoMetadata.model_validate(event),
+    )
+    return jsonify(response_model.model_dump(mode="json")), 200
+
+
+@api.route("/acoes/<event_id>", methods=["PATCH"])
+@require_minimum_role("organizadora")
+def update_acao(event_id):
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"error": "Body deve ser JSON válido"}), 400
+
+    # Verifica campos proibidos antes do Pydantic para retornar erro por campo.
+    campos_proibidos = CAMPOS_BLOQUEADOS_PATCH & set(body.keys())
+    if campos_proibidos:
+        errors = {campo: "Campo não pode ser alterado" for campo in campos_proibidos}
+        return jsonify({"errors": errors}), 400
+
+    try:
+        patch_data = AcaoPatchRequest(**body)
+    except ValidationError as e:
+        return jsonify({"errors": _pydantic_errors_to_dict(e)}), 400
+
+    event = db.session.get(Event, event_id)
+    if event is None:
+        return jsonify({"error": "Ação não encontrada"}), 404
+    
+    if g.current_user.role != "coordenadora" and event.organizer_id != g.current_user_id:
+        return jsonify({"error": "Sem permissão para editar esta ação"}), 403
+
+    # exclude_unset=True garante que apenas os campos enviados na requisição
+    # são aplicados; campos omitidos não sobrescrevem valores existentes.
+    updates = patch_data.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(event, field, value)
+
+    try:
+        db.session.commit()
+        db.session.refresh(event)
+    except Exception as e:
+        current_app.logger.exception(e)
+        db.session.rollback()
+        return jsonify({"error": "Failed to reach database"}), 500
+
+    response_model = AcaoResponse(
+        data=AcaoData.model_validate(event),
+        metadata=AcaoMetadata.model_validate(event),
+    )
+    return jsonify(response_model.model_dump(mode="json")), 200
+
+
+@api.route("/acoes/<event_id>", methods=["DELETE"])
+@require_minimum_role("organizadora")
+def delete_acao(event_id):
+    event = db.session.get(Event, event_id)
+    if event is None:
+        return jsonify({"error": "Ação não encontrada"}), 404
+
+    if g.current_user.role != "coordenadora" and event.organizer_id != g.current_user_id:
+        return jsonify({"error": "Sem permissão para remover esta ação"}), 403
+
+    try:
+        db.session.delete(event)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        db.session.rollback()
+        return jsonify({"error": "Failed to reach database"}), 500
+
+    return "", 204
+
+
+
+@api.post("/acoes/<string:event_id>/notify")
+@require_auth
+@limiter.limit("10 per minute")
+def notify_event_participants(event_id):
+    req_data = request.get_json(silent=True)
+    if not req_data:
+        return jsonify({"error": "Body deve ser JSON válido"}), 400
+
+    try:
+        payload = CustomNotificationRequest(**req_data)
+    except ValidationError as e:
+        return jsonify({"errors": _pydantic_errors_to_dict(e)}), 400
+
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({"error": "Evento não encontrado"}), 404
+
+    # Verify that the current user is the event's organizer
+    if event.organizer_id != g.current_user_id:
+        return jsonify(
+            {
+                "error": "Acesso negado: apenas o organizador do evento pode enviar notificações"
+            }
+        ), 403
+
+    # Fetch all participants of the event who are not cancelled
+    participations = EventParticipation.query.filter(
+        EventParticipation.event_id == event_id,
+        EventParticipation.status != "cancelled",
+    ).all()
+
+    # Create the Notification record
+    try:
+        new_notification = Notification(
+            event_id=event.id,
+            sender_id=g.current_user_id,
+            type="broadcast",
+            title=payload.title,
+            message=payload.message,
+            target_role="participante",
+            sent_at=datetime.now(timezone.utc),
+        )
+        db.session.add(new_notification)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        db.session.rollback()
+        return jsonify({"error": "Falha ao registrar notificação"}), 500
+
+    # Send push notifications using firebase messaging
+    success_count = 0
+    for participation in participations:
+        success_count += send_to_user(
+            user_id=participation.user_id,
+            title=payload.title,
+            body=payload.message,
+            data={
+                "event_id": str(event.id),
+                "notification_id": str(new_notification.id),
+            },
+        )
+
+    return jsonify(
+        {
+            "message": "Notificações enviadas com sucesso",
+            "notification_id": str(new_notification.id),
+            "recipients_count": len(participations),
+            "successful_sends": success_count,
+        }
+    ), 201
+
+
 # =============================================================================
 # ENDPOINT DE PERFIL
 # =============================================================================
@@ -94,7 +304,7 @@ def get_me():
     user = _get_user_or_404(g.current_user_id)
     if not user:
         return jsonify({"error": "Usuária não encontrada"}), 404
-    return jsonify(UserResponse.model_validate(user).model_dump()), 200
+    return jsonify(UserResponse.model_validate(user).model_dump(mode="json")), 200
 
 
 @api.patch("/me")
@@ -143,10 +353,12 @@ def update_me():
         return jsonify({"error": "Falha ao salvar alterações"}), 500
 
     status = 202 if phone_change_pending else 200
-    return jsonify({
-        "profile": UserResponse.model_validate(user).model_dump(),
-        "phone_change_pending": phone_change_pending,
-    }), status
+    return jsonify(
+        {
+            "profile": UserResponse.model_validate(user).model_dump(mode="json"),
+            "phone_change_pending": phone_change_pending,
+        }
+    ), status
 
 
 @api.post("/me/phone/confirm")
@@ -168,11 +380,13 @@ def confirm_phone():
 
     try:
         supabase = current_app.extensions["supabase"]
-        supabase.auth.verify_otp({
-            "phone": user.pending_phone,
-            "token": payload.token,
-            "type": "sms",
-        })
+        supabase.auth.verify_otp(
+            {
+                "phone": user.pending_phone,
+                "token": payload.token,
+                "type": "sms",
+            }
+        )
     except Exception:
         return jsonify({"error": "OTP inválido ou expirado"}), 401
 
@@ -186,7 +400,7 @@ def confirm_phone():
         db.session.rollback()
         return jsonify({"error": "Falha ao salvar novo telefone"}), 500
 
-    return jsonify(UserResponse.model_validate(user).model_dump()), 200
+    return jsonify(UserResponse.model_validate(user).model_dump(mode="json")), 200
 
 
 @api.delete("/me")
@@ -215,9 +429,46 @@ def delete_me():
 
     return "", 204
 
+
+@api.post("/me/fcm-token")
+@require_auth
+def register_fcm_token():
+    body = request.get_json(silent=True) or {}
+    try:
+        payload = FCMTokenRegister(**body)
+    except ValidationError as e:
+        return jsonify({"errors": _pydantic_errors_to_dict(e)}), 400
+
+    # Upsert token
+    fcm_token = FCMToken.query.filter_by(token=payload.token).first()
+    if fcm_token:
+        fcm_token.user_id = g.current_user_id
+        fcm_token.device_type = payload.device_type
+        fcm_token.is_active = True
+        fcm_token.last_used_at = db.func.now()
+    else:
+        fcm_token = FCMToken(
+            user_id=g.current_user_id,
+            token=payload.token,
+            device_type=payload.device_type,
+            last_used_at=db.func.now(),
+        )
+        db.session.add(fcm_token)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        db.session.rollback()
+        return jsonify({"error": "token_save_failure"}), 500
+
+    return jsonify({"message": "token_registered"}), 200
+
+
 # =============================================================================
 # ENDPOINT DE AUTENTICAÇÃO OTP E GOOGLE
 # =============================================================================
+
 
 @auth_bp.post("/otp/request")
 def otp_request():
@@ -250,10 +501,12 @@ def otp_verify():
         return jsonify({"error": str(exc)}), 401
 
     tokens = issue_tokens(str(user.id), user.role)
-    return jsonify({
-        **tokens,
-        "user": {"id": str(user.id), "role": user.role},
-    }), 200
+    return jsonify(
+        {
+            **tokens,
+            "user": {"id": str(user.id), "role": user.role},
+        }
+    ), 200
 
 
 @auth_bp.post("/google/exchange")
@@ -278,10 +531,12 @@ def google_exchange():
 
     user = get_or_create_profile(user_id, full_name=full_name)
     tokens = issue_tokens(str(user.id), user.role)
-    return jsonify({
-        **tokens,
-        "user": {"id": str(user.id), "role": user.role},
-    }), 200
+    return jsonify(
+        {
+            **tokens,
+            "user": {"id": str(user.id), "role": user.role},
+        }
+    ), 200
 
 
 @auth_bp.post("/refresh")
@@ -311,11 +566,101 @@ def logout():
     # Revogação server-side (denylist) fica fora do escopo desta task.
     return jsonify({"message": "logged_out"}), 200
 
+# ---------------------------------------------------------------------------
+# GET /api/acoes
+# ---------------------------------------------------------------------------
+ 
+@api.route("/acoes", methods=["GET"])
+def list_acoes():
+    # --- parse e validacao dos query params ---
+    q = request.args.get("q", "").strip() or None
+ 
+    categoria_raw = request.args.get("categoria")
+    categoria = None
+    if categoria_raw:
+        try:
+            categoria = int(categoria_raw)
+        except ValueError:
+            return jsonify({"error": "categoria deve ser um numero inteiro"}), 400
+ 
+    de_raw = request.args.get("de") or None
+    ate_raw = request.args.get("ate") or None
+ 
+    de = _parse_date_param(de_raw)
+    ate = _parse_date_param(ate_raw)
+ 
+    if de_raw and de is None:
+        return jsonify({"error": "de deve estar no formato YYYY-MM-DD"}), 400
+    if ate_raw and ate is None:
+        return jsonify({"error": "ate deve estar no formato YYYY-MM-DD"}), 400
+ 
+    responsavel = request.args.get("responsavel") or None
+ 
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        per_page = min(100, max(1, int(request.args.get("per_page", 20))))
+    except ValueError:
+        return jsonify({"error": "page e per_page devem ser inteiros positivos"}), 400
+ 
+    # --- query ---
+    from sqlalchemy.orm import joinedload
+    from maes_mobilizadoras.acoes_filter import build_event_filters
+ 
+    filters = build_event_filters(
+        q=q,
+        categoria=categoria,
+        de=de,
+        ate=ate,
+        responsavel=responsavel,
+    )
+ 
+    try:
+        total = db.session.execute(
+            db.select(db.func.count(Event.id)).where(*filters)
+        ).scalar()
+ 
+        events = db.session.execute(
+            db.select(Event)
+            .where(*filters)
+            .options(
+                joinedload(Event.category),
+                joinedload(Event.organizer),
+            )
+            .order_by(Event.event_datetime)
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+        ).unique().scalars().all()
+ 
+    except Exception as e:
+        current_app.logger.exception(e)
+        return jsonify({"error": "Falha ao consultar acoes"}), 500
+ 
+    items = [AcaoListItem(**_event_to_dict(ev)) for ev in events]
+ 
+    response = AcaoListResponse(
+        data=items,
+        total=total,
+        page=page,
+        per_page=per_page,
+        filters=ActiveFilters(
+            q=q,
+            categoria=categoria,
+            de=de_raw,
+            ate=ate_raw,
+            responsavel=responsavel,
+        ),
+    )
+ 
+    return jsonify(response.model_dump(mode="json")), 200
+
 # =============================================================================
 # INJEÇÃO DO ENV NO FRONTEND
 # =============================================================================
-@api.get('/config')
+@api.get("/config")
 def frontend_config():
-    return jsonify({
-        'api_base': os.environ.get('API_BASE', '')
-    })
+    return jsonify(
+        {
+            "api_base": os.environ.get("API_BASE", ""),
+            "firebase": FIREBASE_CONF,
+        }
+    )
