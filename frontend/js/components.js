@@ -260,19 +260,19 @@ const telefone_mobilizadora = element.querySelector('#telefone-mobilizadora')
 
 // vamos usar o botaoFooter, declarado no começo do documento.
 
-botaoFooter.addEventListener('click', () => {
+botaoFooter.addEventListener('click', async() => {
   
   switch (modalAtual) {
               case 'criar-evento':
                   const novo_evento = {
-                    nome_evento_value: nome_evento.value,
-                    tipo_evento_value: tipo_evento.value,
-                    data_evento_value: data_evento.value,
-                    horario_evento_value: horario_evento.value,
-                    local_evento_value: local_evento.value,
-                    descricao_evento_value: descricao_evento.value
+                    titulo: nome_evento.value,
+                    tipo: tipo_evento.value,
+                    data: data_evento.value,
+                    hora: horario_evento.value,
+                    local: local_evento.value,
+                    descricao: descricao_evento.value
                   }
-
+                  await criarEvento(novo_evento);
                   break;
 
               case 'criar-aviso':
@@ -356,3 +356,15 @@ document.addEventListener('click', (e) => {
 }
 
 
+
+// tela de perfil
+async function loadProfile() {
+  const response = await fetch("http://localhost:5000/api/user/me");
+  const data = await response.json();
+
+  document.getElementById("nome").innerText = data.name;
+  document.getElementById("numero_eventos_criou").innerText = data.usuaria_criou_n_eventos;
+  document.getElementById("numero_eventos_participou").innerText = data.usuaria_participou_n_eventos;
+}
+
+loadProfile();

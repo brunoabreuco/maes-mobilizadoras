@@ -1,51 +1,56 @@
-window.addEventListener('load', async () => {
+let eventos = [];
 
-  const eventos = [
-    {
-      mes: 'ABR',
-      dia: '16',
-      tipo_evento: 'Reunião',
-      confirmado: 'Você confirmou',
-      titulo: 'Reunião do Conselho Comunitário',
-      horario: '14:00',
-      local: 'Centro Comunitário Parelheiros',
-      confirmados: '12 pessoas confirmadas',
-      organizador: 'Luiza'
-    },
+// 1. BUSCAR EVENTOS DO BACKEND
+async function carregarEventos() {
+  try {
+    const res = await fetch('http://localhost:5000/api/eventos');
+    eventos = await res.json();
 
-    {
-      mes: 'ABR',
-      dia: '20',
-      tipo_evento: 'Oficina',
-      confirmado: 'Evento aberto',
-      titulo: 'Oficina de Capacitação',
-      horario: '09:00',
-      local: 'CEU Parelheiros',
-      confirmados: '20 pessoas confirmadas',
-      organizador: 'Fernanda'
-    },
+    renderizarEventos();
+  } catch (err) {
+    console.error('Erro ao buscar eventos:', err);
+  }
+}
 
-    {
-      mes: 'MAI',
-      dia: '03',
-      tipo_evento: 'Mutirão',
-      confirmado: 'Você confirmou',
-      titulo: 'Mutirão Comunitário',
-      horario: '08:30',
-      local: 'Praça Central',
-      confirmados: '35 pessoas confirmadas',
-      organizador: 'Carlos'
-    }
-  ];
-
+// 2. RENDERIZAR COMPONENTES NA TELA
+async function renderizarEventos() {
   const mount = document.getElementById('lista-avisos');
 
   mount.innerHTML = '';
 
   for (let evento of eventos) {
-    mount.appendChild(
-      await make('componenteEventoDetalhado', evento)
-    );
-  }
+    const el = await make('componenteEventoDetalhado', {
+      data: evento.data,                 // exemplo: "2026-04-16"
+      titulo: evento.titulo,
+      tipo: evento.tipo,
+      hora: evento.hora,
+      local: evento.local,
+      confirmados: evento.confirmados,
+      organizador: evento.organizador
+    });
 
+    mount.appendChild(el);
+  }
+}
+
+// 3. CRIAR EVENTO NO BACKEND
+async function criarEvento(evento) {
+  try {
+    await fetch('http://localhost:5000/api/eventos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(evento)
+    });
+
+    await carregarEventos(); // atualiza tela
+  } catch (err) {
+    console.error('Erro ao criar evento:', err);
+  }
+}
+
+// 4. INICIALIZAÇÃO DA PÁGINA
+window.addEventListener('load', () => {
+  carregarEventos();
 });
