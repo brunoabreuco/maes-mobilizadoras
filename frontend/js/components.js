@@ -291,6 +291,7 @@ botaoFooter.addEventListener('click', () => {
               default:
                   break;
   }
+  fecharModal();
 })
 
   function fecharModal() {
