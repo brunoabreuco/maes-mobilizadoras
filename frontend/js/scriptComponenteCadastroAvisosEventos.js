@@ -83,6 +83,27 @@ async function controlarCadastroAvisosEventos(element) {
 
   // vamos usar o botaoFooter, declarado no começo do documento.
 
+  // criar mensagem de erro
+  function mostrar_msg_erro() {
+    const fundo = document.createElement('div');
+
+    fundo.innerHTML = `<div id="tela_escura_erro" style="display: flex; align-items: center; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.6);">
+    <div id="caixa_erro" style="margin: 0 auto; display: flex; flex-direction: column; align-items: center; background-color: #f5ede9; width: 800px; height: 250px; padding: 50px 10px 0px 10px; border-radius: 30px;">
+        <span class="texto_erro" style="font-size: 35px; font-weight: 600; font-family: 'Inter', sans-serif">Não foi possível criar o aviso.</span>
+        <span class="texto_erro" style="font-size: 35px; font-weight: 600; font-family: 'Inter', sans-serif">Tente mais tarde.</span>
+        <button id="botao_erro_ok" style="background-color: #00636A; margin-top: 30px; border: none; border-radius: 20px; width: 160px; height: 80px; font-size: 25px; font-weight: 700; font-family: 'Inter', sans-serif; color: #FFFFFF">OK</button>
+    </div>
+    </div>`;
+
+    document.body.appendChild(fundo);
+
+    const botao_ok = document.getElementById('botao_erro_ok');
+    
+    botao_ok.addEventListener('click', () => {
+      fundo.remove();
+    });
+  }
+
   botaoFooter.addEventListener('click', async () => {
 
     switch (modalAtual) {
@@ -107,7 +128,7 @@ async function controlarCadastroAvisosEventos(element) {
           });
         } catch (error) {
           console.log(error);
-          alert(error);
+          mostrar_msg_erro()
         }
 
         break;
