@@ -18,6 +18,10 @@ BASE_DIR = Path(__file__).parent.parent
 def create_app(test_config: dict | None = None):
     load_dotenv()
 
+    # Ativa modo debug do flask para ativar chave pública de testes
+    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.config['DEBUG'] = debug_mode
+
     app = Flask(
         __name__, static_folder=str(BASE_DIR.parent / "frontend"), static_url_path=""
     )
@@ -30,7 +34,15 @@ def create_app(test_config: dict | None = None):
         "DATABASE_URL", f"sqlite:///{db_path}"
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SECRET_KEY"] = os.environ.get("JWT_SECRET", "dev-secret-key")
+
+    # Usa a chave pública apenas no ambiente de testes.
+    secret = os.environ.get("JWT_SECRET")
+    if not secret:
+        if app.debug:
+            secret = "dev-secret-key"
+        else:
+            raise RuntimeError("JWT_SECRET must be set in production")
+    app.config["SECRET_KEY"] = secret
 
     if test_config is not None:
         app.config.from_mapping(test_config)
@@ -38,11 +50,12 @@ def create_app(test_config: dict | None = None):
     db.init_app(app)
     limiter.init_app(app)
 
+    # Guarda db.create_all() e seed_all() atrás de uma flag
     with app.app_context():
-        db.create_all()
-        from maes_mobilizadoras.seed import seed_all
-
-        seed_all()
+        if app.config.get("TESTING") or os.environ.get("AUTO_MIGRATE"):
+            db.create_all()
+            from maes_mobilizadoras.seed import seed_all
+            seed_all()
 
     # Initialize Firebase
     if not firebase_admin._apps:

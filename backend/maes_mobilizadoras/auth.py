@@ -100,12 +100,19 @@ def decode_token(token: str, expected_type: str = "access") -> dict:
     Decodifica e valida JWT emitido por esta aplicação.
     Lança ValueError em caso de falha.
     """
-    # TODO: Tirar o backdoor no ambiente de produção!!!!
-    if token.startswith("confia") and expected_type == "access":
-        return {
-            "type": expected_type,
-            "sub": "00000000-0000-0000-0000-00000000000" + token[-1],
-        }
+    # Alternativa de backdoor segura para testes
+    _TEST_TOKENS = {
+        "confia1": "00000000-0000-0000-0000-000000000001",
+        "confia2": "00000000-0000-0000-0000-000000000002",
+        "confia3": "00000000-0000-0000-0000-000000000003",
+    }
+    if (
+        os.environ.get("ALLOW_TEST_TOKENS") == "1"
+        and expected_type == "access"
+        and token in _TEST_TOKENS
+    ):
+        return {"type": "access", "sub": _TEST_TOKENS[token]}
+
     try:
         payload = pyjwt.decode(token, _secret(), algorithms=[_ALGORITHM])
     except pyjwt.ExpiredSignatureError:
