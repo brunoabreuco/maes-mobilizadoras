@@ -1,10 +1,32 @@
 async function loadProfile() {
-  const response = await fetch("http://localhost:5000/api/user/me");
+  const response = await fetch("http://localhost:5000/api/me");
   const data = await response.json();
 
-  document.getElementById("nome").innerText = data.name;
-  document.getElementById("numero_eventos_criou").innerText = data.usuaria_criou_n_eventos;
-  document.getElementById("numero_eventos_participou").innerText = data.usuaria_participou_n_eventos;
-}
+  document.getElementById("nome").innerText = data.full_name;
+  document.getElementById("subtitulo").innerText = data.role;
 
-loadProfile();
+  const botaoAviso = document.getElementById("botao_azul");
+  const botaoMobilizadora = document.getElementById("botao_vermelho");
+
+  switch (data.role) {
+
+    case "coordenadora":
+      break;
+
+    case "organizadora":
+      if (botaoMobilizadora) {
+        botaoMobilizadora.style.display = "none";
+      }
+      break;
+
+    case "participante":
+      if (botaoAviso) {
+        botaoAviso.style.display = "none";
+      }
+
+      if (botaoMobilizadora) {
+        botaoMobilizadora.style.display = "none";
+      }
+      break;
+  }
+}
