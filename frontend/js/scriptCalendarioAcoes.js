@@ -1,5 +1,15 @@
-async function iniciarCalendario() {
+async function reqGetEventos() {
+  try {
+    const res = await apiGet('/api/acoes');
+    return res.data;
+  } catch (err) {
+    console.error('Erro ao buscar eventos:', err);
+    mostrar_msg_erro('Erro ao buscar eventos:', "" + err);
+  }
+}
 
+async function iniciarCalendario() {
+  const eventos = await reqGetEventos();
   // espera o componente carregar no DOM
   while (
     !document.getElementById('monthYear') ||
@@ -57,8 +67,17 @@ async function iniciarCalendario() {
           ? 'active'
           : '';
 
+      let isAnEvent = false;
+      for (let evt of eventos) {
+        if (evt.event_datetime && new Date(evt.event_datetime).toDateString() === date.toDateString()) {
+          isAnEvent = true;
+          break;
+        }
+      }
+      const isAnEventClass = isAnEvent ? 'is-an-event' : '';
+
       datesHTML += `
-        <div class="date ${activeClass}">
+        <div class="date ${activeClass} ${isAnEventClass}">
           ${i}
         </div>
       `;
@@ -79,20 +98,16 @@ async function iniciarCalendario() {
   };
 
   async function updateNextEvents() {
-    const events = [
-      { data: '16 de abril', desc: 'Comunitário' },
-      { data: '18 de abril', desc: 'Teste' },
-    ];
-
     const mount = document.getElementById('proximos-eventos');
-
-    if (!mount) return;
 
     mount.innerHTML = '';
 
-    for (let evt of events) {
+    for (let evt of eventos) {
       mount.appendChild(
-        await make('componenteproximosEventos', evt)
+        await make('componenteproximosEventos', {
+          data: formatToLocalDate(evt.event_datetime),
+          desc: evt.title
+        })
       );
     }
   }
@@ -108,7 +123,7 @@ async function iniciarCalendario() {
   });
 
   updateCalendar();
-  updateNextEvents();
+  await updateNextEvents();
 }
 
 iniciarCalendario();

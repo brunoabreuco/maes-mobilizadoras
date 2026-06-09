@@ -204,7 +204,7 @@ requires-dist = [
     { name = "pyjwt", specifier = "==2.12.1" },
     { name = "pytest", specifier = "==9.0.3" },
     { name = "python-dotenv", specifier = "==1.2.2" },
-    { name = "selenium", specifier = ">=4.44.0" },
+    { name = "selenium", specifier = "==4.44.0" },
     { name = "supabase", specifier = "==2.30.0" },
     { name = "twilio", specifier = "==9.10.9" },
 ]

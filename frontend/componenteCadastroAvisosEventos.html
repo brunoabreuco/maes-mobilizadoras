@@ -1,0 +1,153 @@
+    <div id="container-principal">
+    <div id="modal">
+        <div class="header">
+            <h2>Detalhes do evento</h2>
+            <div id="header-botoes">
+                <button><img src="./images/close_X.svg"></button>
+            </div>
+        </div>
+        <hr>
+        
+
+        <div id="detalhes-do-evento" class="func_detalhes-do-evento">
+            
+
+            <span id="det-tipo-evento" class="func_tipo_evento"></span>
+            <h1 id="det-titulo-evento"></h1>
+            <span id="det-descricao-evento" class="func_descricao_evento"></span>
+
+            <div id="det-conjunto-detalhes" class="func_conjunto-detalhes">
+                <div class="caixa_info">
+                    <img src="./images/icone-verde-claro-calendario.svg">
+                    <div class="dois_textos_info">
+                        <h3 class="texto-grande-preto" id="det-data-evento"></h3>
+                        <span class="texto_pequeno_cinza" id="det-horario-evento"></span>
+                    </div>
+                </div>
+
+                <div class="caixa_info">
+                    <img src="./images/icone-verde-claro-pin.svg">
+                    <div class="dois_textos_info">
+                        <h3 class="texto_grande_preto">Local</h3>
+                        <span class="texto_pequeno_cinza" id="det-endereco-evento"></span>
+                    </div>
+                </div>
+
+                <div class="caixa_info">
+                    <img src="./images/icone-verde-claro-pessoa.svg">
+                    <div class="dois_textos_info">
+                        <h3 class="texto_grande_preto">Organizado por</h3>
+                        <span class="texto_pequeno_cinza" id="det-organizadora"></span>
+                    </div>
+                </div>
+
+                <div class="caixa_info">
+                    <img src="./images/icone-verde-claro-duas-pessoas.svg">
+                    <div class="dois_textos_info">
+                        <h3 class="texto_grande_preto">Participantes</h3>
+                        <span class="texto_pequeno_cinza"><span id="det-numero-pessoas-confirmadas"></span> pessoa(s) confirmada(s)</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="avisos-evento">
+
+        </div>
+
+        <div id="criar-evento">
+            <form>
+                <fieldset>
+                    <label for="nome-evento">Nome do Evento *</label><br>
+                    <div class="input-com-icone">
+                        <input type="text" id="nome-evento" placeholder="Ex: Reunião do Conselho" required>
+                        <button>
+                            <img src="./images/icone-microfone-verde.svg">
+                        </button>
+                    </div>
+                    <br>
+
+                    <label for="tipo-evento">Tipo de Evento *</label><br>
+                    <select id="tipo-evento" name="tipo-evento" required>
+                    </select>
+                    <br>
+
+                    <div id="data-horario">
+                        <div class="input-com-icone">
+                            <label for="data">Data *</label><br>
+                            <input class="input-preto" type="date" id="data" required>
+                            <br>
+                        </div>
+
+                        <div>
+                            <label for="time">Horário *</label><br>
+                            <input class="input-preto" id="horario" type="time" required>
+                            <br>
+                        </div>
+                    </div>
+
+                    <label for="local-evento">Local *</label><br>
+                    <div class="input-com-icone">
+                        <input type="text" id="local-evento" placeholder="Ex: Centro Comunitário" required>
+                        <button>
+                            <img src="./images/icone-microfone-verde.svg">
+                        </button>
+                    </div>
+                    <br>
+
+                    <label for="descricao-novo-evento">Descrição</label><br>
+                    <div class="input-com-icone">
+                        <textarea id="descricao-novo-evento" name="userReview" placeholder="Descreva o evento..." cols="100" rows="6"></textarea>
+                        <button id="textarea-btn">
+                            <img src="./images/icone-microfone-verde.svg">
+                        </button>
+                    </div>
+
+                </fieldset>
+            </form>
+        </div>
+
+        <div id="criar-aviso">
+            <fieldset>
+                <label for="selecionar-evento">Selecione o Evento</label><br>
+                <select id="tipo-evento-ja-existente" name="selecionar-evento" required>
+                </select>
+                <br>
+
+                <div class="titulo-aviso">
+                <label for="titulo-aviso">Título do Aviso</label><br>
+                    <input type="text" id="titulo-novo-aviso" placeholder="Lembrete"/>
+                    <button id="input-text-btn">
+                        <img src="./images/icone-microfone-verde.svg">
+                    </button>
+                </div>
+
+                <label for="msg-aviso">Corpo do Aviso</label><br>
+                <div class="msg-aviso">
+                    <textarea id="descricao-novo-aviso" placeholder="Ex: Lembrete importante! Não esqueça de trazer seus materiais..." cols="100" rows="6"></textarea>
+                    <button id="textarea-btn">
+                        <img src="./images/icone-microfone-verde.svg">
+                    </button>
+                </div>
+            </fieldset>
+        </div>
+
+        <div id="adicionar-mobilizadora">
+            <div id="caixa-vermelha">
+                <p><span>Atenção:</span> Esta pessoa receberá permissões para criar eventos e enviar avisos para a comunidade.</p>
+            </div>
+            <label for="telefone-mobilizadora">Telefone com DDD</label>
+            <div id="input-imagem">
+                <input id="telefone-mobilizadora" type="tel" placeholder="(11) 99999-9999" required>
+                <img id="icone-telefone" src="./images/icone-telefone.svg">
+            </div>            
+            <p>Será enviado um código de verificação por SMS</p>
+        </div>
+
+        <hr id="hr-footer">
+        <div id="footer">
+            <button id="confirmar-presenca">Confirmar Presença</button>
+        </div>   
+    </div>    
+    </div>

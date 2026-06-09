@@ -55,34 +55,8 @@ function setProps(element, props) {
   }
 
   // CONTROLE DE VISIBILIDADE POR TELA
-
-  const barraPesquisa = element.querySelector('.barra_pesquisa');
-  const filtros = element.querySelector('.filtros');
-  const naoLidos = element.querySelector('.nao_lidos');
-
-  const pagina = window.location.pathname;
-
-  // tela_avisos.html
-  if (pagina.includes('tela_avisos')) {
-    if (barraPesquisa) barraPesquisa.style.display = 'none';
-    if (filtros) filtros.style.display = 'none';
-  }
-
-  // tela_meu_perfil.html e tela_calendario.html
-  if (
-    pagina.includes('tela_meu_perfil') ||
-    pagina.includes('tela_calendario')
-  ) {
-    if (barraPesquisa) barraPesquisa.style.display = 'none';
-    if (filtros) filtros.style.display = 'none';
-    if (naoLidos) naoLidos.style.display = 'none';
-  }
-
-  // tela_acoes_comunitarias.html
-  if (pagina.includes('tela_acoes_comunitarias')) {
-    if (naoLidos) naoLidos.style.display = 'none';
-  }
 }
+
 /**
  * Cria uma instância de um componente, carrega seu HTML e aplica as propriedades.
  * 
@@ -95,6 +69,15 @@ async function make(spec, props) {
   const element = await loadComponent(htmlUrl);
   element.classList.add('c-' + spec);
   setProps(element, props);
+
+  if (spec === 'header') {
+    configurarHeader(element);
+  }
+
+  if (spec === 'componenteCadastroAvisosEventos') {
+    controlarCadastroAvisosEventos(element);
+  }
+
   return element;
 }
 
@@ -118,6 +101,10 @@ function loadAllComponents() {
       make(spec, props).then(el => {
         element.innerHTML = '';
         element.appendChild(el);
+
+        if (spec === 'footer') {
+          configurarFooter()
+        }
       });
     }
   }
@@ -125,4 +112,5 @@ function loadAllComponents() {
 
 // Inicializa o carregamento automático de componentes ao carregar o script
 loadAllComponents();
+
 
