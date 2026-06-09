@@ -14,6 +14,8 @@ from maes_mobilizadoras.models import (
     FCMToken,
     EventParticipation,
     Notification,
+    NotificationRead,
+    EventCategory,
 )
 from maes_mobilizadoras.schemas import (
     AcaoData,
@@ -29,6 +31,10 @@ from maes_mobilizadoras.schemas import (
     UserResponse,
     UserUpdateRequest,
     CustomNotificationRequest,
+    NotificationListItem,
+    NotificationListResponse,
+    CategoryListResponse,
+    CategoryListItem,
 )
 from maes_mobilizadoras.auth import (
     decode_token,
@@ -56,6 +62,8 @@ def _pydantic_errors_to_dict(exc: ValidationError) -> dict:
 
 
 def _get_user_or_404(user_id: str):
+    if not user_id:
+        return None
     user = db.session.get(User, user_id)
     if not user or not user.is_active:
         return None
@@ -72,10 +80,12 @@ def _anonymize(user: User) -> None:
     user.phone = "del_" + hashlib.sha256(user.phone.encode()).hexdigest()[:15]
     user.is_active = False
 
+
 # ---------------------------------------------------------------------------
 # Helpers privados de acoes_filter
 # ---------------------------------------------------------------------------
- 
+
+
 def _parse_date_param(value: str | None) -> datetime | None:
     """Converte string YYYY-MM-DD em datetime. Retorna None se vazio."""
     if not value:
@@ -84,8 +94,8 @@ def _parse_date_param(value: str | None) -> datetime | None:
         return datetime.strptime(value.strip(), "%Y-%m-%d")
     except ValueError:
         return None  # sinaliza erro para a rota tratar
- 
- 
+
+
 def _event_to_dict(ev) -> dict:
     """Serializa um Event ORM (com category e organizer carregados) para dict."""
     return {
@@ -176,8 +186,11 @@ def update_acao(event_id):
     event = db.session.get(Event, event_id)
     if event is None:
         return jsonify({"error": "Ação não encontrada"}), 404
-    
-    if g.current_user.role != "coordenadora" and event.organizer_id != g.current_user_id:
+
+    if (
+        g.current_user.role != "coordenadora"
+        and event.organizer_id != g.current_user_id
+    ):
         return jsonify({"error": "Sem permissão para editar esta ação"}), 403
 
     # exclude_unset=True garante que apenas os campos enviados na requisição
@@ -208,7 +221,10 @@ def delete_acao(event_id):
     if event is None:
         return jsonify({"error": "Ação não encontrada"}), 404
 
-    if g.current_user.role != "coordenadora" and event.organizer_id != g.current_user_id:
+    if (
+        g.current_user.role != "coordenadora"
+        and event.organizer_id != g.current_user_id
+    ):
         return jsonify({"error": "Sem permissão para remover esta ação"}), 403
 
     try:
@@ -221,6 +237,51 @@ def delete_acao(event_id):
 
     return "", 204
 
+
+@api.post("/acoes/<string:event_id>/participate")
+@require_auth
+def participate_event(event_id):
+    # Faz TOGGLE no estado de participação do usuário no evento.
+    user_id = g.current_user_id
+
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({"error": "Ação não encontrada"}), 404
+
+    # Check if user is already participating
+    participation = EventParticipation.query.filter_by(
+        event_id=event_id, user_id=user_id
+    ).first()
+
+    if participation:
+        if participation.status == "confirmed":
+            participation.status = "cancelled"
+            participation.registered_at = datetime.now(timezone.utc)
+        else:
+            # If it was cancelled, re-confirm
+            participation.status = "confirmed"
+            participation.registered_at = datetime.now(timezone.utc)
+    else:
+        # Check if event is full
+        if event.max_participants and event.participant_count >= event.max_participants:
+            return jsonify(
+                {"error": "Este evento já atingiu o limite de participantes"}
+            ), 400
+
+        # Create new participation
+        participation = EventParticipation(
+            event_id=event_id, user_id=user_id, status="confirmed"
+        )
+        db.session.add(participation)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        db.session.rollback()
+        return jsonify({"error": "Falha ao registrar participação"}), 500
+
+    return jsonify({"message": "Participação confirmada com sucesso"}), 201
 
 
 @api.post("/acoes/<string:event_id>/notify")
@@ -304,7 +365,18 @@ def get_me():
     user = _get_user_or_404(g.current_user_id)
     if not user:
         return jsonify({"error": "Usuária não encontrada"}), 404
-    return jsonify(UserResponse.model_validate(user).model_dump(mode="json")), 200
+
+    # Calculate counts
+    created_count = Event.query.filter_by(organizer_id=user.id).count()
+    participated_count = EventParticipation.query.filter_by(
+        user_id=user.id, status="confirmed"
+    ).count()
+
+    response_data = UserResponse.model_validate(user).model_dump(mode="json")
+    response_data["created_events_count"] = created_count
+    response_data["participated_events_count"] = participated_count
+
+    return jsonify(response_data), 200
 
 
 @api.patch("/me")
@@ -465,6 +537,105 @@ def register_fcm_token():
     return jsonify({"message": "token_registered"}), 200
 
 
+@api.get("/notifications")
+@require_auth
+def list_notifications():
+    user_id = g.current_user_id
+    user_role = g.current_user.role
+
+    # Subquery for events the user is participating in
+    participating_events_subquery = (
+        db.select(EventParticipation.event_id).where(
+            EventParticipation.user_id == user_id,
+            EventParticipation.status != "cancelled",
+        )
+    ).scalar_subquery()
+
+    # Query notifications
+    # We join with NotificationRead to check if the notification has been read by the user
+    query = (
+        db.select(Notification, NotificationRead.id.is_not(None).label("is_read"))
+        .outerjoin(
+            NotificationRead,
+            (NotificationRead.notification_id == Notification.id)
+            & (NotificationRead.user_id == user_id),
+        )
+        .options(joinedload(Notification.event))
+        .where(
+            db.or_(
+                # Event-specific notifications: user must be a participant or the sender
+                db.and_(
+                    Notification.event_id.is_not(None),
+                    db.or_(
+                        Notification.event_id.in_(participating_events_subquery),
+                        Notification.sender_id == user_id,
+                    ),
+                ),
+                # Global/Role notifications: no event_id, check role or if sender
+                db.and_(
+                    Notification.event_id.is_(None),
+                    db.or_(
+                        Notification.target_role == "all",
+                        Notification.target_role == user_role,
+                        Notification.target_role.is_(None),
+                        Notification.sender_id == user_id,
+                    ),
+                ),
+            )
+        )
+        .where(Notification.sent_at.is_not(None))
+        .order_by(Notification.sent_at.desc())
+    )
+
+    try:
+        results = db.session.execute(query).all()
+    except Exception as e:
+        current_app.logger.exception(e)
+        return jsonify({"error": "Falha ao recuperar notificações"}), 500
+
+    items = []
+    for notification, is_read in results:
+        item = NotificationListItem.model_validate(notification)
+        item.is_read = is_read
+        if notification.event:
+            item.cover_image_url = notification.event.cover_image_url
+        items.append(item)
+
+    return jsonify(NotificationListResponse(data=items).model_dump(mode="json")), 200
+
+
+@api.post("/notifications/<notification_id>/read")
+@require_auth
+def mark_notification_read(notification_id):
+    user_id = g.current_user_id
+
+    # Verify notification exists
+    notification = db.session.get(Notification, notification_id)
+    if not notification:
+        return jsonify({"error": "Notificação não encontrada"}), 404
+
+    # Check if already read
+    existing = NotificationRead.query.filter_by(
+        notification_id=notification_id, user_id=user_id
+    ).first()
+
+    if not existing:
+        try:
+            read_record = NotificationRead(
+                notification_id=notification_id,
+                user_id=user_id,
+                read_at=datetime.now(timezone.utc),
+            )
+            db.session.add(read_record)
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            return jsonify({"error": "Falha ao marcar como lida"}), 500
+
+    return jsonify({"message": "Notificação marcada como lida"}), 200
+
+
 # =============================================================================
 # ENDPOINT DE AUTENTICAÇÃO OTP E GOOGLE
 # =============================================================================
@@ -566,15 +737,29 @@ def logout():
     # Revogação server-side (denylist) fica fora do escopo desta task.
     return jsonify({"message": "logged_out"}), 200
 
+
 # ---------------------------------------------------------------------------
 # GET /api/acoes
 # ---------------------------------------------------------------------------
- 
+
+
+@api.get("/categories")
+def list_categories():
+    categories = (
+        db.session.execute(db.select(EventCategory).order_by(EventCategory.name))
+        .scalars()
+        .all()
+    )
+
+    data = [CategoryListItem.model_validate(c) for c in categories]
+    return jsonify(CategoryListResponse(data=data).model_dump(mode="json")), 200
+
+
 @api.route("/acoes", methods=["GET"])
 def list_acoes():
     # --- parse e validacao dos query params ---
     q = request.args.get("q", "").strip() or None
- 
+
     categoria_raw = request.args.get("categoria")
     categoria = None
     if categoria_raw:
@@ -582,30 +767,30 @@ def list_acoes():
             categoria = int(categoria_raw)
         except ValueError:
             return jsonify({"error": "categoria deve ser um numero inteiro"}), 400
- 
+
     de_raw = request.args.get("de") or None
     ate_raw = request.args.get("ate") or None
- 
+
     de = _parse_date_param(de_raw)
     ate = _parse_date_param(ate_raw)
- 
+
     if de_raw and de is None:
         return jsonify({"error": "de deve estar no formato YYYY-MM-DD"}), 400
     if ate_raw and ate is None:
         return jsonify({"error": "ate deve estar no formato YYYY-MM-DD"}), 400
- 
+
     responsavel = request.args.get("responsavel") or None
- 
+
     try:
         page = max(1, int(request.args.get("page", 1)))
         per_page = min(100, max(1, int(request.args.get("per_page", 20))))
     except ValueError:
         return jsonify({"error": "page e per_page devem ser inteiros positivos"}), 400
- 
+
     # --- query ---
     from sqlalchemy.orm import joinedload
     from maes_mobilizadoras.acoes_filter import build_event_filters
- 
+
     filters = build_event_filters(
         q=q,
         categoria=categoria,
@@ -613,30 +798,68 @@ def list_acoes():
         ate=ate,
         responsavel=responsavel,
     )
- 
+
     try:
         total = db.session.execute(
             db.select(db.func.count(Event.id)).where(*filters)
         ).scalar()
- 
-        events = db.session.execute(
-            db.select(Event)
-            .where(*filters)
-            .options(
-                joinedload(Event.category),
-                joinedload(Event.organizer),
+
+        events = (
+            db.session.execute(
+                db.select(Event)
+                .where(*filters)
+                .options(
+                    joinedload(Event.category),
+                    joinedload(Event.organizer),
+                )
+                .order_by(Event.event_datetime)
+                .offset((page - 1) * per_page)
+                .limit(per_page)
             )
-            .order_by(Event.event_datetime)
-            .offset((page - 1) * per_page)
-            .limit(per_page)
-        ).unique().scalars().all()
- 
+            .unique()
+            .scalars()
+            .all()
+        )
+
     except Exception as e:
         current_app.logger.exception(e)
         return jsonify({"error": "Falha ao consultar acoes"}), 500
- 
-    items = [AcaoListItem(**_event_to_dict(ev)) for ev in events]
- 
+
+    # --- Check participation if user is logged in ---
+    user_id = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        try:
+            from maes_mobilizadoras.auth import decode_token
+
+            token = auth_header.split(" ", 1)[1]
+            payload = decode_token(token)
+            user_id = payload.get("sub")
+        except Exception:
+            pass
+
+    participating_ids = set()
+    if user_id and events:
+        event_ids = [ev.id for ev in events]
+        participations = (
+            db.session.execute(
+                db.select(EventParticipation.event_id).where(
+                    EventParticipation.user_id == user_id,
+                    EventParticipation.event_id.in_(event_ids),
+                    EventParticipation.status != "cancelled",
+                )
+            )
+            .scalars()
+            .all()
+        )
+        participating_ids = set(participations)
+
+    items = []
+    for ev in events:
+        d = _event_to_dict(ev)
+        d["is_participating"] = d["id"] in participating_ids
+        items.append(AcaoListItem(**d))
+
     response = AcaoListResponse(
         data=items,
         total=total,
@@ -650,8 +873,9 @@ def list_acoes():
             responsavel=responsavel,
         ),
     )
- 
+
     return jsonify(response.model_dump(mode="json")), 200
+
 
 # =============================================================================
 # INJEÇÃO DO ENV NO FRONTEND

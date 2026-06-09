@@ -6,6 +6,8 @@ function configurarHeader(element) {
 
   const pagina = window.location.pathname;
 
+  console.log('p', pagina);
+
   if (pagina.includes('tela_avisos')) {
     if (barraPesquisa) barraPesquisa.style.display = 'none';
     if (filtros) filtros.style.display = 'none';
@@ -23,4 +25,6 @@ function configurarHeader(element) {
   if (pagina.includes('tela_acoes_comunitarias')) {
     if (naoLidos) naoLidos.style.display = 'none';
   }
+
 }
+

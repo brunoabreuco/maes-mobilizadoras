@@ -1,37 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./css/styleComponenteCadastroAvisosEventos.css">
-    <title>Document</title>
-</head>
-<body>
     <div id="container-principal">
     <div id="modal">
         <div class="header">
             <h2>Detalhes do evento</h2>
             <div id="header-botoes">
-                <button id="botao-aviso"><img src="./images/icone-aviso-preto.svg"></button>
                 <button><img src="./images/close_X.svg"></button>
             </div>
         </div>
         <hr>
         
 
-        <div id="detalhes-do-evento">
+        <div id="detalhes-do-evento" class="func_detalhes-do-evento">
             
 
-            <span id="tipo_evento"></span>
-            <h1 id="titulo-evento"></h1>
-            <span id="descricao_evento"></span>
+            <span id="det-tipo-evento" class="func_tipo_evento"></span>
+            <h1 id="det-titulo-evento"></h1>
+            <span id="det-descricao-evento" class="func_descricao_evento"></span>
 
-            <div id="conjunto-detalhes">
+            <div id="det-conjunto-detalhes" class="func_conjunto-detalhes">
                 <div class="caixa_info">
                     <img src="./images/icone-verde-claro-calendario.svg">
                     <div class="dois_textos_info">
-                        <h3 class="texto_grande_preto" id="data_evento"></h3>
-                        <span class="texto_pequeno_cinza" id="horario_evento"></span>
+                        <h3 class="texto-grande-preto" id="det-data-evento"></h3>
+                        <span class="texto_pequeno_cinza" id="det-horario-evento"></span>
                     </div>
                 </div>
 
@@ -39,7 +29,7 @@
                     <img src="./images/icone-verde-claro-pin.svg">
                     <div class="dois_textos_info">
                         <h3 class="texto_grande_preto">Local</h3>
-                        <span class="texto_pequeno_cinza" id="endereco_evento"></span>
+                        <span class="texto_pequeno_cinza" id="det-endereco-evento"></span>
                     </div>
                 </div>
 
@@ -47,7 +37,7 @@
                     <img src="./images/icone-verde-claro-pessoa.svg">
                     <div class="dois_textos_info">
                         <h3 class="texto_grande_preto">Organizado por</h3>
-                        <span class="texto_pequeno_cinza" id="organizadora"></span>
+                        <span class="texto_pequeno_cinza" id="det-organizadora"></span>
                     </div>
                 </div>
 
@@ -55,7 +45,7 @@
                     <img src="./images/icone-verde-claro-duas-pessoas.svg">
                     <div class="dois_textos_info">
                         <h3 class="texto_grande_preto">Participantes</h3>
-                        <span class="texto_pequeno_cinza"><span id="numero_pessoas_confirmadas"></span> pessoas confirmadas</span>
+                        <span class="texto_pequeno_cinza"><span id="det-numero-pessoas-confirmadas"></span> pessoa(s) confirmada(s)</span>
                     </div>
                 </div>
             </div>
@@ -80,11 +70,6 @@
 
                     <label for="tipo-evento">Tipo de Evento *</label><br>
                     <select id="tipo-evento" name="tipo-evento" required>
-                        <option value="a">A</option>
-                        <option value="b">B</option>
-                        <option value="c">C</option>
-                        <option value="d">D</option>
-                        <option value="e">E</option>
                     </select>
                     <br>
 
@@ -127,11 +112,6 @@
             <fieldset>
                 <label for="selecionar-evento">Selecione o Evento</label><br>
                 <select id="tipo-evento-ja-existente" name="selecionar-evento" required>
-                    <option value="a">A</option>
-                    <option value="b">B</option>
-                    <option value="c">C</option>
-                    <option value="d">D</option>
-                    <option value="e">E</option>
                 </select>
                 <br>
 
@@ -171,5 +151,3 @@
         </div>   
     </div>    
     </div>
-</body>
-</html>

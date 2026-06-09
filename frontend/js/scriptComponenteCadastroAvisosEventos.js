@@ -1,11 +1,26 @@
-async function makeCadastroAvisosEventos(prop) {
-  const comp = await make('componenteCadastroAvisosEventos', prop);
-  await controlarCadastroAvisosEventos(comp);
+async function reqCriarEvento(evento) {
+  try {
+    await apiPost('/api/acoes', evento);
+
+    await carregarEventos(); // atualiza tela
+  } catch (err) {
+    console.error('Erro ao criar evento:', err);
+    mostrar_msg_erro('Erro ao criar evento', "" + err);
+  }
+}
+
+function combineDateAndTime(dateString, timeString) {
+  const [year, month, day] = dateString.split('-').map(Number);
+  const [hours, minutes] = timeString.split(':').map(Number);
+
+  return new Date(year, month - 1, day, hours, minutes);
 }
 
 async function controlarCadastroAvisosEventos(element) {
+  // TODO: algum tipo de cache para /api/me seria interessante
+  const usuarioAtual = await apiGet('/api/me', undefined);
 
-  const container = element.querySelector('#container-principal');
+  const container = document.getElementById("container-principal");
 
   const criarEvento = element.querySelector('#criar-evento');
   const criarAviso = element.querySelector('#criar-aviso');
@@ -27,10 +42,14 @@ async function controlarCadastroAvisosEventos(element) {
   adicionarMobilizadora.style.display = 'none';
   detalhesEvento.style.display = 'none';
 
-  let modalAtual = null;
+  window.MEModal = {
+    tipo: null,
+    evento: null
+  };
 
-  function abrirModal(tipo) {
-    modalAtual = tipo;
+  async function abrirModal(tipo, evento) {
+    window.MEModal.tipo = tipo;
+    window.MEModal.evento = evento || null;
 
     container.style.display = 'flex';
 
@@ -54,7 +73,6 @@ async function controlarCadastroAvisosEventos(element) {
       if (tipo === 'criar-evento') botaoFooter.innerText = 'Criar Evento';
       if (tipo === 'criar-aviso') botaoFooter.innerText = 'Enviar Aviso';
       if (tipo === 'adicionar-mobilizadora') botaoFooter.innerText = 'Adicionar Mobilizadora';
-      if (tipo === 'detalhes-evento') botaoFooter.innerText = 'Confirmar Presença';
     }
 
     // mostrar seção certa
@@ -62,73 +80,111 @@ async function controlarCadastroAvisosEventos(element) {
     if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
     if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
     if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
+
+    if (tipo === 'criar-aviso') {
+      const resp = await apiGet('/api/acoes', { responsavel: usuarioAtual.id });
+      const sel = document.getElementById("tipo-evento-ja-existente");
+      sel.innerHTML = '';
+      for (let ac of resp.data) {
+        const opt = document.createElement("option");
+        opt.setAttribute('value', ac.id);
+        opt.innerText = ac.title;
+        sel.appendChild(opt);
+      }
+    }
+
+    if (tipo === 'detalhes-evento') {
+      try {
+        const evt = window.MEModal.evento;
+        const dataFmt = new Intl.DateTimeFormat(undefined, {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        });
+        const horaFmt = new Intl.DateTimeFormat(undefined, {
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+        const eData = new Date(evt.event_datetime);
+        if (evt.is_participating) {
+          botaoFooter.innerText = 'Cancelar Participação';
+        } else {
+          botaoFooter.innerText = 'Confirmar Presença';
+        }
+
+        document.getElementById("det-tipo-evento").innerText = evt.category_name || '';
+        document.getElementById("det-titulo-evento").innerText = evt.title;
+        document.getElementById("det-descricao-evento").innerText = evt.description || '';
+        document.getElementById("det-data-evento").innerText = dataFmt.format(eData);
+        document.getElementById("det-horario-evento").innerText = horaFmt.format(eData);
+        document.getElementById("det-endereco-evento").innerText = evt.location_name;
+        document.getElementById("det-organizadora").innerText = evt.organizer_name || '<desconhecido>';
+        document.getElementById("det-numero-pessoas-confirmadas").innerText = evt.participant_count;
+      } catch (error) {
+        console.log(error);
+        mostrar_msg_erro('Não foi possível carregar mais detalhes do evento', '' + error);
+        fecharModal();
+      }
+    }
   }
 
   // para criar um novo evento (página de ações comunitárias)
-  const nome_evento = element.querySelector('#nome-evento')
-  const tipo_evento = element.querySelector('#tipo-evento')
-  const data_evento = element.querySelector('#data')
-  const horario_evento = element.querySelector('#horario')
-  const local_evento = element.querySelector('#local-evento')
-  const descricao_evento = element.querySelector('#descricao-novo-evento')
+  const nome_evento = element.querySelector('#nome-evento');
+  const tipo_evento = element.querySelector('#tipo-evento');
+  const data_evento = element.querySelector('#data');
+  const horario_evento = element.querySelector('#horario');
+  const local_evento = element.querySelector('#local-evento');
+  const descricao_evento = element.querySelector('#descricao-novo-evento');
 
   // para criar novo aviso (página de perfil)
-  const evento_escolhido = element.querySelector('#tipo-evento-ja-existente')
-  const titulo_aviso_novo = element.querySelector('#titulo-novo-aviso')
-  const mensagem_aviso_novo = element.querySelector('#descricao-novo-aviso')
+  const evento_escolhido = element.querySelector('#tipo-evento-ja-existente');
+  const titulo_aviso_novo = element.querySelector('#titulo-novo-aviso');
+  const mensagem_aviso_novo = element.querySelector('#descricao-novo-aviso');
 
   // para adicionar mobilizadora (página de perfil)
-  const telefone_mobilizadora = element.querySelector('#telefone-mobilizadora')
+  const telefone_mobilizadora = element.querySelector('#telefone-mobilizadora');
+
+
+  tipo_evento.innerHTML = '';
+  const res = await apiGet("/api/categories", undefined);
+  console.log(res);
+  const categorias = res.data;
+  for (let cat of categorias) {
+    const opt = document.createElement('option');
+    opt.setAttribute('value', cat.id);
+    opt.innerText = cat.name;
+    tipo_evento.appendChild(opt);
+  }
 
 
   // vamos usar o botaoFooter, declarado no começo do documento.
-
-  // criar mensagem de erro
-  function mostrar_msg_erro() {
-    const fundo = document.createElement('div');
-
-    fundo.innerHTML = `<div id="tela_escura_erro" style="display: flex; align-items: center; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.6);">
-    <div id="caixa_erro" style="margin: 0 auto; display: flex; flex-direction: column; align-items: center; background-color: #f5ede9; width: 800px; height: 250px; padding: 50px 10px 0px 10px; border-radius: 30px;">
-        <span class="texto_erro" style="font-size: 35px; font-weight: 600; font-family: 'Inter', sans-serif">Não foi possível criar o aviso.</span>
-        <span class="texto_erro" style="font-size: 35px; font-weight: 600; font-family: 'Inter', sans-serif">Tente mais tarde.</span>
-        <button id="botao_erro_ok" style="background-color: #00636A; margin-top: 30px; border: none; border-radius: 20px; width: 160px; height: 80px; font-size: 25px; font-weight: 700; font-family: 'Inter', sans-serif; color: #FFFFFF">OK</button>
-    </div>
-    </div>`;
-
-    document.body.appendChild(fundo);
-
-    const botao_ok = document.getElementById('botao_erro_ok');
-    
-    botao_ok.addEventListener('click', () => {
-      fundo.remove();
-    });
-  }
-
   botaoFooter.addEventListener('click', async () => {
 
-    switch (modalAtual) {
+    switch (window.MEModal.tipo) {
       case 'criar-evento':
         const novo_evento = {
-          titulo: nome_evento.value,
+          title: nome_evento.value,
           tipo: tipo_evento.value,
-          data: data_evento.value,
-          hora: horario_evento.value,
-          local: local_evento.value,
-          descricao: descricao_evento.value
+          event_datetime: combineDateAndTime(data_evento.value, horario_evento.value).toISOString(),
+          location_name: local_evento.value,
+          description: descricao_evento.value,
+          organizer_id: usuarioAtual.id,
+          status: 'active',
+          category_id: tipo_evento.value
         }
-        await criarEvento(novo_evento);
+        await reqCriarEvento(novo_evento);
+        window.location.reload();
         break;
 
       case 'criar-aviso':
-        const path = `/acoes/${evento_escolhido.value}/notify`;
         try {
-          await apiPost(path, {
+          await apiPost(`/api/acoes/${evento_escolhido.value}/notify`, {
             title: titulo_aviso_novo.value,
             message: mensagem_aviso_novo.value
           });
         } catch (error) {
           console.log(error);
-          mostrar_msg_erro()
+          mostrar_msg_erro('Não foi possível criar o aviso', '' + error);
         }
 
         break;
@@ -136,6 +192,15 @@ async function controlarCadastroAvisosEventos(element) {
       case 'adicionar-mobilizadora':
         const telefone_mobilizadora_value = telefone_mobilizadora.value
         break;
+
+      case 'detalhes-evento':
+        try {
+          await apiPost(`/api/acoes/${window.MEModal.evento.id}/participate`, {});
+          window.location.reload();
+        } catch (error) {
+          console.log(error);
+          mostrar_msg_erro('Não foi possível confirmar a presença', '' + error);
+        }
 
       default:
         break;
@@ -152,6 +217,8 @@ async function controlarCadastroAvisosEventos(element) {
     detalhesEvento.style.display = 'none';
 
     document.body.style.overflow = 'auto';
+    window.MEModal.tipo = null;
+    window.MEModal.evento = null;
   }
 
 
@@ -161,26 +228,6 @@ async function controlarCadastroAvisosEventos(element) {
   }
 
 
-  // BOTÃO AZUL
-  const botaoAzul = document.getElementById('botao_azul');
-  if (botaoAzul) {
-    botaoAzul.addEventListener('click', () => abrirModal('criar-aviso'));
-  }
-
-  // BOTÃO VERMELHO
-  const botaoVermelho = document.getElementById('botao_vermelho');
-  if (botaoVermelho) {
-    botaoVermelho.addEventListener('click', () => abrirModal('adicionar-mobilizadora'));
-  }
-
-  // BOTÃO +
-  // ⚠️ IMPORTANTE: está fora do componente, então usamos document
-  const botaoAdicionarEvento = document.querySelector('[style*="icone-adicionar-evento"]')
-    || document.querySelector('button img[src*="icone-adicionar-evento"]')?.parentElement;
-
-  if (botaoAdicionarEvento) {
-    botaoAdicionarEvento.addEventListener('click', () => abrirModal('criar-evento'));
-  }
 
 
   const pagina = window.location.pathname;
@@ -191,15 +238,7 @@ async function controlarCadastroAvisosEventos(element) {
     }
   }
 
-  document.addEventListener('click', (e) => {
-    const evento = e.target.closest('.conteudo');
-
-    if (!evento) return;
-
-    // evita clicar em botões internos
-    if (e.target.closest('button')) return;
-
-    abrirModal('detalhes-evento');
-  });
+  window.ccaeAbrirModal = abrirModal;
 
 }
+

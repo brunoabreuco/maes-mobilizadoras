@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="./css/style.meu_perfil.css">
     <link rel="stylesheet" href="./css/style.header.css">
     <link rel="stylesheet" href="./css/style.footer.css">
-    <title>Document</title>
+    <link rel="stylesheet" href="./css/styleComponenteCadastroAvisosEventos.css">
+    <title>Mães Mobilizadoras</title>
 </head>
 <body style="background-color: #f5ede9">
      <div id="header" data-spec="header" data-prop-titulo="Meu perfil"></div>
@@ -20,7 +21,7 @@
         <h2>Suas Estatísticas</h2>
         <div id="caixas">
 
-            <div class="caixa" id="caixa_verde">
+            <div class="caixa participante-hide" id="caixa_verde">
                 <div class="icone_participou">
                     <img class="icone" id="medalha" src="./images/icone_medalha_verde.svg">
                     <h3>Criou</h3>
@@ -42,7 +43,7 @@
 
         </div>
 
-        <h2>Ações de Mobilizadora</h2>
+        <h2 class="participante-hide">Ações de Mobilizadora</h2>
         <div class="botoes">
             <button class="botao" id="botao_azul">
                 <img src="./images/icone_noticicacao_azul.svg">
@@ -58,7 +59,7 @@
         <div class="menu">
             <div class="icone_descricao">
                 <img class="icone" src="./images/icone_configuracao.svg">
-                <a href="#">Configuracoes</a>
+                <a href="#">Configurações</a>
             </div>
             
             <div class="icone_descricao">
@@ -77,10 +78,12 @@
     
      <div id="footer" data-spec="footer"></div>
      
+    <script src="js/api.js"></script>
+    <script src="js/exige-login.js"></script>
+     <script src="./js/components.js"></script>
      <script src="./js/script-header.js"></script>
      <script src="./js/script-footer.js"></script>
      <script src="./js/scriptComponenteCadastroAvisosEventos.js"></script>
-     <script src="./js/components.js"></script>
      <script src="./js/notifications.js"></script>
      <script src="./js/script-tela-perfil.js"></script>
      

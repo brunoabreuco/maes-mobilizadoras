@@ -82,10 +82,11 @@ class AcaoResponse(BaseModel):
 
 CAMPOS_IMUTAVEIS = {"role", "id"}
 
+
 class AcaoListItem(BaseModel):
     """Representacao de um evento na listagem. Inclui dados de categoria e organizador
     para que o frontend nao precise de chamadas adicionais."""
- 
+
     id: str
     title: str
     description: Optional[str] = None
@@ -98,28 +99,43 @@ class AcaoListItem(BaseModel):
     status: str
     participant_count: int
     cover_image_url: Optional[str] = None
- 
+    is_participating: bool = False
+
     model_config = ConfigDict(from_attributes=False)
- 
- 
+
+
 class ActiveFilters(BaseModel):
     """Filtros ativos retornados no response para o frontend reconstruir a URL."""
- 
+
     q: Optional[str] = None
     categoria: Optional[int] = None
     de: Optional[str] = None
     ate: Optional[str] = None
     responsavel: Optional[str] = None
- 
- 
+
+
 class AcaoListResponse(BaseModel):
     data: list[AcaoListItem]
     total: int
     page: int
     per_page: int
     filters: ActiveFilters
- 
+
     model_config = ConfigDict(from_attributes=False)
+
+
+class CategoryListItem(BaseModel):
+    id: int
+    name: str
+    icon: Optional[str] = None
+    color: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CategoryListResponse(BaseModel):
+    data: list[CategoryListItem]
+
 
 class UserResponse(BaseModel):
     id: str | UUID
@@ -128,6 +144,8 @@ class UserResponse(BaseModel):
     neighborhood: Optional[str] = None
     role: str
     avatar_url: Optional[str] = None
+    created_events_count: int = 0
+    participated_events_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -159,13 +177,35 @@ class FCMTokenRegister(BaseModel):
 class CustomNotificationRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=150)
     message: str = Field(..., min_length=1, max_length=300)
+
+
+class NotificationListItem(BaseModel):
+    id: str | UUID
+    event_id: Optional[str | UUID] = None
+    sender_id: Optional[str | UUID] = None
+    type: str
+    title: str
+    message: str
+    sent_at: Optional[datetime] = None
+    is_read: bool = False
+    cover_image_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NotificationListResponse(BaseModel):
+    data: list[NotificationListItem]
+
+
 class RoleUpdateRequest(BaseModel):
     """Body do PATCH /admin/users/:id/role."""
+
     role: ROLE_VALUES
 
 
 class UserAdminResponse(BaseModel):
     """Perfil retornado na listagem e alteração administrativa."""
+
     id: str
     full_name: str
     phone: str

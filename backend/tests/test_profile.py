@@ -4,7 +4,8 @@ from unittest.mock import MagicMock
 import pytest
 from flask import Flask
 
-from maes_mobilizadoras.models import User, db
+from datetime import datetime, timezone, timedelta
+from maes_mobilizadoras.models import User, db, Event, EventParticipation, EventCategory
 from maes_mobilizadoras.api_routes import api
 from maes_mobilizadoras.auth import issue_tokens
 
@@ -88,6 +89,41 @@ def test_get_me_retorna_perfil_correto(client, app):
     assert data["full_name"] == "Maria Silva"
     assert data["phone"] == "+5511999990001"
     assert "role" in data
+
+
+def test_get_me_retorna_counts_corretos(client, app):
+    uid = _create_user(app, full_name="Maria Silva", phone="+5511999990020")
+    headers = _auth_header(app, uid)
+
+    with app.app_context():
+        category = EventCategory(name="Saúde")
+        db.session.add(category)
+        db.session.commit()
+        
+        # Create 1 event as organizer
+        event = Event(
+            title="Ação Teste",
+            event_datetime=datetime.now(timezone.utc) + timedelta(days=1),
+            location_name="Rua Teste",
+            category_id=category.id,
+            organizer_id=uid,
+            status="active"
+        )
+        db.session.add(event)
+        db.session.commit()
+        
+        # Create 1 participation as confirmed
+        participation = EventParticipation(
+            event_id=event.id, user_id=uid, status="confirmed"
+        )
+        db.session.add(participation)
+        db.session.commit()
+
+    resp = client.get("/api/me", headers=headers)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["created_events_count"] == 1
+    assert data["participated_events_count"] == 1
 
 
 def test_get_me_usuario_inativo_retorna_404(client, app):

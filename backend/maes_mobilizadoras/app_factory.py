@@ -22,15 +22,27 @@ def create_app(test_config: dict | None = None):
         __name__, static_folder=str(BASE_DIR.parent / "frontend"), static_url_path=""
     )
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+    instance_path = Path(app.instance_path)
+    instance_path.mkdir(exist_ok=True)
+    db_path = instance_path / "app.db"
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+        "DATABASE_URL", f"sqlite:///{db_path}"
+    )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SECRET_KEY"] = os.environ["JWT_SECRET"]
+    app.config["SECRET_KEY"] = os.environ.get("JWT_SECRET", "dev-secret-key")
 
     if test_config is not None:
         app.config.from_mapping(test_config)
 
     db.init_app(app)
     limiter.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+        from maes_mobilizadoras.seed import seed_all
+
+        seed_all()
 
     # Initialize Firebase
     if not firebase_admin._apps:
@@ -48,6 +60,7 @@ def create_app(test_config: dict | None = None):
             except Exception as e:
                 app.logger.warning(f"Firebase not initialized: {e}")
 
+    # Supabase Client (Used for Auth only)
     supabase = create_client(
         os.environ["SUPABASE_URL"],
         os.environ["SUPABASE_SERVICE_ROLE_KEY"],
@@ -65,7 +78,7 @@ def create_app(test_config: dict | None = None):
     from maes_mobilizadoras.api_routes import api, auth_bp
     from maes_mobilizadoras.admin_routes import admin_bp
 
-    app.register_blueprint(api)       # /api/*
-    app.register_blueprint(auth_bp)   # /auth/*
+    app.register_blueprint(api)  # /api/*
+    app.register_blueprint(auth_bp)  # /auth/*
     app.register_blueprint(admin_bp)  # /admin/*
     return app

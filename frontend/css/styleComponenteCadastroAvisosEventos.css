@@ -1,14 +1,41 @@
-@import url("global.css");
-* {
+:root {
+    --background-primary-color: #f5ede9;
+    --background-secondary-color: #00636a;
+    --background-tertiary-color: #faf6f4;
+
+    --primary-color: #00636A;
+    --secondary-color: #FAF6F4;
+    --details-green: #CCE0E2;
+    --details-dark-green: #99C1C5;
+    --details-red: #F8DDDA;
+    --details-blue: #CCE3F2;
+
+    --text-primary-color: #0E0F11;
+    --text-secondary-color: #FFFFFF;
+    --text-tertiary-color: #6E6F70;
+    --text-quaternary-color: #9F9FA0;
+
+    --text-details-gray: #3E3F41;
+    --text-details-green: #00636A;
+    --text-details-red: #D35746;
+    --text-details-blue: #0072B7;
+
+    --button-no-clickable: #4E959D;
+    --button-text-no-clickable: #C7C7C7;
+
+    --hr-color: #CFCFCF;
+
+}
+.c-componenteCadastroAvisosEventos * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     font-family: "Inter", sans-serif;
 }
-body {
+.c-componenteCadastroAvisosEventos {
     background-color: transparent;
 }
-#container-principal {
+.c-componenteCadastroAvisosEventos #container-principal {
     position: fixed;
     top: 0;
     left: 0;
@@ -22,7 +49,7 @@ body {
 
     display: none;
 }
-#modal {
+.c-componenteCadastroAvisosEventos #modal {
     border-radius: 35px 35px 0 0;
     position: absolute;
     bottom: 0;
@@ -37,7 +64,7 @@ body {
     -webkit-overflow-scrolling: touch; /* melhora no mobile */
 }
 
-.header {
+.c-componenteCadastroAvisosEventos .header {
     position: sticky;
     top: 0;
     display: flex;
@@ -47,50 +74,50 @@ body {
     padding: 17px 30px 0px 22px;
     background-color: var(--background-primary-color);
 }
-.header + hr {
+.c-componenteCadastroAvisosEventos .header + hr {
     position: sticky;
     top: 58px;
     z-index: 10;
 }
-h2 {
+.c-componenteCadastroAvisosEventos h2 {
     font-size: 18px;
     font-weight: 600;
 }
-#header-botoes {
+.c-componenteCadastroAvisosEventos #header-botoes {
     display: flex;
     gap: 11px;
     vertical-align: middle;
 }
-.header button {
+.c-componenteCadastroAvisosEventos .header button {
     background-color: transparent;
     border: none;
     margin-top: -15px;
     
 }
-.header button img{
+.c-componenteCadastroAvisosEventos .header button img{
     width: 24px;
     height: 24px;
     vertical-align: middle;
 }
-hr {
+.c-componenteCadastroAvisosEventos hr {
     background-color: var(--hr-color);
     width: 100%;
     height: 1.5px;
     border: none;
 }
 
-#detalhes-do-evento {
-    padding: 0 22px;
+.c-componenteCadastroAvisosEventos .func_detalhes-do-evento {
+    padding: 20px 22px;
     display: none;
 }
-#tipo_evento {
+.c-componenteCadastroAvisosEventos .func_tipo_evento {
     display: block;
     background-color: var(--details-green);
     border-radius: 11px;
-    width: 62px;
-    height: 22px;
     margin-top: 20px;
     margin-bottom: 12px;
+    padding: 0 5px;
+    width: fit-content;
 
     color: var(--text-details-green);
     font-size: 11px;
@@ -98,65 +125,61 @@ hr {
     font-weight: 500;
     text-align: center;
 }
-h1 {
-    font-size: 28px;
+.c-componenteCadastroAvisosEventos h1 {
+    font-size: 19px;
     font-weight: 600;
     line-height: 36px;
     margin-bottom: 7px;
 }
-#descricao_evento {
+.c-componenteCadastroAvisosEventos .func_descricao_evento {
     color: var(--text-tertiary-color);
     font-size: 16px;
     font-weight: 400;
     margin-bottom: 20px;
 }
-#conjunto-detalhes {
+.c-componenteCadastroAvisosEventos .func_conjunto-detalhes {
     display: flex;
     flex-direction: column;
     gap: 14.5px;
     margin-top: 20px;
     margin-bottom: 70px;
 }
-.caixa_info {
+.c-componenteCadastroAvisosEventos .caixa_info {
     display: flex;
     flex-direction: row;
     gap: 9px;
 }
-.caixa-info img {
+.c-componenteCadastroAvisosEventos .caixa-info img {
     width: 43px;
     height: 43px;
 }
-.texto_grande_preto {
+.c-componenteCadastroAvisosEventos .texto_grande_preto {
     font-size: 16px;
     font-weight: 500;
 }
-.texto_pequeno_cinza {
+.c-componenteCadastroAvisosEventos .texto_pequeno_cinza {
     color: var(--text-tertiary-color);
     font-size: 13px;
     font-weight: 500;
     margin-top: 1px;
 }
 
-
-
-
-
-#criar-evento {
+.c-componenteCadastroAvisosEventos #criar-evento {
     display: none;
 }
-fieldset {
+.c-componenteCadastroAvisosEventos fieldset {
     border: none;
     padding: 22px 14px 11px 14px;
 }
-label {
+.c-componenteCadastroAvisosEventos label {
     color: var(--text-details-gray);
     font-size: 16px;
     font-weight: 500;
 }
-.input-com-icone {
+.c-componenteCadastroAvisosEventos .input-com-icone {
     position: relative;
 }
-fieldset button {
+.c-componenteCadastroAvisosEventos fieldset button {
     position: absolute;
     top: 47%;
     right: 13px;
@@ -165,12 +188,12 @@ fieldset button {
     background-color: transparent;
     border: none;
 }
-fieldset img {
+.c-componenteCadastroAvisosEventos fieldset img {
     width: 24px;
     height: 24px;
     vertical-align: middle;
 }
-input, select {
+.c-componenteCadastroAvisosEventos input, select {
     width: 100%;
     height: 50px;
     border-radius: 10px;
@@ -184,17 +207,17 @@ input, select {
     font-size: 16px;
     font-weight: 500;
 }
-#data-horario {
+.c-componenteCadastroAvisosEventos #data-horario {
     display: flex;
     gap: 12px;
 }
-#data-horario > div {
+.c-componenteCadastroAvisosEventos #data-horario > div {
     flex: 1;
 }
-.input-preto {
+.c-componenteCadastroAvisosEventos .input-preto {
     color: #000000;
 }
-textarea {
+.c-componenteCadastroAvisosEventos textarea {
     width: 100%;
     height: 150px;
     border-radius: 10px;
@@ -209,29 +232,29 @@ textarea {
     font-size: 16px;
     font-weight: 500;
 }
-#tipo-evento {
+.c-componenteCadastroAvisosEventos #tipo-evento {
     margin-bottom: 35px;
 }
-#textarea-btn {
+.c-componenteCadastroAvisosEventos #textarea-btn {
     position: absolute;
     top: 23%;
     right: 13px;
     transform: translateY(-50%);
 }
-.msg-aviso {
+.c-componenteCadastroAvisosEventos .msg-aviso {
     position: relative;
 }
 
 
-#criar-aviso {
+.c-componenteCadastroAvisosEventos #criar-aviso {
     display: none;
 }
 
 
-#adicionar-mobilizadora {
+.c-componenteCadastroAvisosEventos #adicionar-mobilizadora {
     padding: 23px 21px 0 21px;
 }
-#caixa-vermelha {
+.c-componenteCadastroAvisosEventos #caixa-vermelha {
     background-color: var(--details-red);
     height: 60px;
     border-radius: 11px;
@@ -239,47 +262,42 @@ textarea {
     padding: 11px 13px;
     margin-bottom: 15px;
 }
-#adicionar-mobilizadora p{
+.c-componenteCadastroAvisosEventos #adicionar-mobilizadora p{
     color: var(--text-details-gray);
     font-size: 11px;
     font-weight: 400;
     line-height: 19px;
 }
-#adicionar-mobilizadora span{
+.c-componenteCadastroAvisosEventos #adicionar-mobilizadora span{
     color: var(--text-details-gray);
     font-size: 11px;
     font-weight: 700;
 }
-#adicionar-mobilizadora label {
+.c-componenteCadastroAvisosEventos #adicionar-mobilizadora label {
     font-size: 16px;
     font-weight: 500;
 }
-#input-imagem {
+.c-componenteCadastroAvisosEventos #input-imagem {
     position: relative;
     margin-bottom: -11px;
 }
-#icone-telefone {
+.c-componenteCadastroAvisosEventos #icone-telefone {
     position: absolute;
     top: 23px;
     left: 14px;
 }
-#telefone-mobilizadora {
+.c-componenteCadastroAvisosEventos #telefone-mobilizadora {
     padding-left: 45px;
     color: var(--text-tertiary-color);
     font-size: 16px;
     font-weight: 500;
 }
 
-
-
-
-
-
-#hr-footer {
+.c-componenteCadastroAvisosEventos #hr-footer {
     position: fixed;
     bottom: 85px;
 }
-#footer {
+.c-componenteCadastroAvisosEventos #footer {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -290,7 +308,7 @@ textarea {
 
     background-color: var(--background-primary-color);
 }
-#confirmar-presenca {
+.c-componenteCadastroAvisosEventos #confirmar-presenca {
     width: 100%;
     height: 48px;
     border: none;

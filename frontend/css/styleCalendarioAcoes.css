@@ -5,6 +5,12 @@
     font-family: "Inter", sans-serif;
 }
 
+.is-an-event {
+    background-color: #cce0e2;
+    border-color: #00636A;
+    color: #286166;
+}
+
 .active {
     background-color: #00636A;
     color: #FAF6F4;
