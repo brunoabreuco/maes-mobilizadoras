@@ -94,8 +94,8 @@ async function loadAllComponents(refresh) {
   let done = false;
   while (!done) {
     const it = document.querySelectorAll('*');
+    let processedElementCount = 0;
     for (let element of it) {
-      let processedElementCount = 0;
       if (element.hasAttribute('data-spec') && !element.classList.contains('x-initialized-naturally')) {
         processedElementCount += 1;
         element.classList.add('x-initialized-naturally');
