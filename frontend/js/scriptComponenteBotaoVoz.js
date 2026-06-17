@@ -63,7 +63,14 @@ async function carregarBotoesVoz() {
       const speechToText = event.results[0][0].transcript;
       const confidence = event.results[0][0].confidence;
       console.log(`Texto reconhecido (confiança: ${confidence.toFixed(2)}):`, speechToText);
-      target.value = speechToText;
+      let finalString = speechToText.replace(/(^\s*\w|[.!?]\s*\w)/g, function (match) {
+        return match.toUpperCase();
+      });
+      finalString = finalString.trim();
+      if (finalString.search(/[.!?]$/g) === -1) {
+        finalString += '.';
+      }
+      target.value = finalString;
     };
 
     recognition.onerror = (event) => {
