@@ -85,27 +85,38 @@ async function make(spec, props) {
  * Percorre o DOM em busca de elementos com o atributo 'data-spec' e os inicializa automaticamente.
  * Também extrai atributos 'data-prop-*' do elemento container para passar como props.
  */
-function loadAllComponents() {
-  const it = document.querySelectorAll('*');
-  for (let element of it) {
-    if (element.hasAttribute('data-spec')) {
-      const spec = element.getAttribute('data-spec');
-      let props = {};
-      // Extrai propriedades definidas como data-prop-nome="valor"
-      for (let attr of element.attributes) {
-        if (attr.name.startsWith('data-prop-')) {
-          props[attr.name.replace('data-prop-', '')] = attr.value;
+async function loadAllComponents(refresh) {
+  if (refresh) {
+    for (let element of document.querySelectorAll('.x-initialized-naturally')) {
+      element.classList.remove('x-initialized-naturally');
+    }
+  }
+  let done = false;
+  while (!done) {
+    const it = document.querySelectorAll('*');
+    for (let element of it) {
+      let processedElementCount = 0;
+      if (element.hasAttribute('data-spec') && !element.classList.contains('x-initialized-naturally')) {
+        processedElementCount += 1;
+        element.classList.add('x-initialized-naturally');
+        const spec = element.getAttribute('data-spec');
+        let props = {};
+        // Extrai propriedades definidas como data-prop-nome="valor"
+        for (let attr of element.attributes) {
+          if (attr.name.startsWith('data-prop-')) {
+            props[attr.name.replace('data-prop-', '')] = attr.value;
+          }
         }
-      }
-      // Renderiza o componente e substitui o conteúdo do elemento
-      make(spec, props).then(el => {
+        // Renderiza o componente e substitui o conteúdo do elemento
+        const el = await make(spec, props)
         element.innerHTML = '';
         element.appendChild(el);
 
         if (spec === 'footer') {
           configurarFooter()
         }
-      });
+      }
+      done = processedElementCount == 0;
     }
   }
 }
