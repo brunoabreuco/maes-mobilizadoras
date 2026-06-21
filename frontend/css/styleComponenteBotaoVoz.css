@@ -1,0 +1,71 @@
+div:has(> .c-componenteBotaoVoz) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.c-componenteBotaoVoz {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.c-componenteBotaoVoz .record-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: #00636a;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    justify-content: right;
+    align-items: bottom;
+    position: relative;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    padding: 0;
+}
+
+.c-componenteBotaoVoz .record-btn:hover {
+    transform: scale(1.1);
+    opacity: 0.85;
+}
+
+.c-componenteBotaoVoz .record-btn.unsupported {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.c-componenteBotaoVoz .record-btn:active {
+    transform: scale(0.9);
+}
+
+.c-componenteBotaoVoz .record-btn svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+/* Pulsing effect when listening, pulsing the icon itself */
+.c-componenteBotaoVoz .record-btn.listening {
+    animation: pulse-icon 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-icon {
+    0% {
+        color: #00636a;
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        color: #0072b7;
+        transform: scale(1.2);
+        opacity: 0.5;
+    }
+    100% {
+        color: #00636a;
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
