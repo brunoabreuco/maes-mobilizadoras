@@ -74,6 +74,12 @@ async function configurarElementos() {
 }
 
 // 4. INICIALIZAÇÃO DA PÁGINA
-carregarEventos();
-configurarElementos();
-
+// CORREÇÃO: as chamadas foram movidas para o evento 'componentsReady' disparado por
+// components.js após todos os componentes (header, footer) estarem no DOM.
+// Antes eram chamadas imediatamente, causando dois problemas:
+//   - barraPesquisa retornava null porque #input-pesquisa só existe após o header carregar.
+//   - carregarEventos disparava antes da página estar pronta para renderizar.
+document.addEventListener('componentsReady', () => {
+  carregarEventos();
+  configurarElementos();
+});

@@ -66,7 +66,7 @@ class AcaoPatchRequest(BaseModel):
 
 class AcaoMetadata(BaseModel):
     id: str | UUID
-    participant_count: int
+    participant_count: int = Field(default=0)  # CORREÇÃO: default=0 evita ValidationError quando o banco retorna NULL (registros criados antes do DEFAULT estar garantido)
     created_at: datetime
     updated_at: datetime
 
@@ -97,7 +97,7 @@ class AcaoListItem(BaseModel):
     organizer_id: str
     organizer_name: Optional[str] = None
     status: str
-    participant_count: int
+    participant_count: int = Field(default=0)  # CORREÇÃO: default=0 evita ValidationError quando o banco retorna NULL (registros criados antes do DEFAULT estar garantido)
     cover_image_url: Optional[str] = None
     is_participating: bool = False
 
