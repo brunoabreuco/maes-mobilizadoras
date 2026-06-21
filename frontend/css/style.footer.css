@@ -36,6 +36,23 @@
     z-index: 1;
 }
 
+/* Hover nos ícones: escala e escurece */
+.c-footer a:not(.nav-active) img {
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+.c-footer a:not(.nav-active):hover img {
+    filter: brightness(0.6);
+    transform: scale(1.1);
+}
+
+/* Hover no texto: escurece */
+.c-footer a:not(.nav-active) span {
+    transition: color 0.2s ease;
+}
+.c-footer a:not(.nav-active):hover span {
+    color: #4a4a4a;
+}
+
 .c-footer .inicio {
     width: 18.33px;
     height: 15.58px;
@@ -86,12 +103,12 @@
     }
 }
 
-/* Ícone ativo → branco */
+/* Ícone ativo → branco (já existente) */
 .c-footer a.nav-active img {
     filter: brightness(0) invert(1);
 }
 
-/* Texto ativo → branco */
+/* Texto ativo → branco (já existente) */
 .c-footer a.nav-active span {
     color: #ffffff;
     font-weight: 600;
