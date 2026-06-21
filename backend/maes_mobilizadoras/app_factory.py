@@ -55,6 +55,7 @@ def create_app(test_config: dict | None = None):
         if app.config.get("TESTING") or os.environ.get("AUTO_MIGRATE"):
             db.create_all()
             from maes_mobilizadoras.seed import seed_all
+
             seed_all()
 
     # Initialize Firebase

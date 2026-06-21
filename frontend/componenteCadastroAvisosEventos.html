@@ -6,8 +6,6 @@
                 <button><img src="./images/close_X.svg"></button>
             </div>
         </div>
-        <hr>
-        
 
         <div id="detalhes-do-evento" class="func_detalhes-do-evento">
             
@@ -62,9 +60,7 @@
                     <label for="nome-evento">Nome do Evento *</label><br>
                     <div class="input-com-icone">
                         <input type="text" id="nome-evento" placeholder="Ex: Reunião do Conselho" required>
-                        <button>
-                            <img src="./images/icone-microfone-verde.svg">
-                        </button>
+                        <div data-spec="componenteBotaoVoz" data-prop-target="nome-evento"></div>
                     </div>
                     <br>
 
@@ -90,18 +86,14 @@
                     <label for="local-evento">Local *</label><br>
                     <div class="input-com-icone">
                         <input type="text" id="local-evento" placeholder="Ex: Centro Comunitário" required>
-                        <button>
-                            <img src="./images/icone-microfone-verde.svg">
-                        </button>
+                        <div data-spec="componenteBotaoVoz" data-prop-target="local-evento"></div>
                     </div>
                     <br>
 
                     <label for="descricao-novo-evento">Descrição</label><br>
                     <div class="input-com-icone">
                         <textarea id="descricao-novo-evento" name="userReview" placeholder="Descreva o evento..." cols="100" rows="6"></textarea>
-                        <button id="textarea-btn">
-                            <img src="./images/icone-microfone-verde.svg">
-                        </button>
+                        <div data-spec="componenteBotaoVoz" data-prop-target="descricao-novo-evento"></div>
                     </div>
 
                 </fieldset>
@@ -113,22 +105,21 @@
                 <label for="selecionar-evento">Selecione o Evento</label><br>
                 <select id="tipo-evento-ja-existente" name="selecionar-evento" required>
                 </select>
-                <br>
 
                 <div class="titulo-aviso">
-                <label for="titulo-aviso">Título do Aviso</label><br>
+                  <label for="titulo-aviso">Título do Aviso</label>
+                  <div class="input-com-icone">
                     <input type="text" id="titulo-novo-aviso" placeholder="Lembrete"/>
-                    <button id="input-text-btn">
-                        <img src="./images/icone-microfone-verde.svg">
-                    </button>
+                    <div data-spec="componenteBotaoVoz" data-prop-target="titulo-novo-aviso"></div>
+                  </div>
                 </div>
 
-                <label for="msg-aviso">Corpo do Aviso</label><br>
+                <label for="msg-aviso">Corpo do Aviso</label>
                 <div class="msg-aviso">
+                  <div class="input-com-icone">
                     <textarea id="descricao-novo-aviso" placeholder="Ex: Lembrete importante! Não esqueça de trazer seus materiais..." cols="100" rows="6"></textarea>
-                    <button id="textarea-btn">
-                        <img src="./images/icone-microfone-verde.svg">
-                    </button>
+                    <div data-spec="componenteBotaoVoz" data-prop-target="descricao-novo-aviso"></div>
+                  </div>
                 </div>
             </fieldset>
         </div>
