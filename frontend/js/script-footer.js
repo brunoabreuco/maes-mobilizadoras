@@ -1,6 +1,9 @@
 function configurarFooter() {
     var nav = document.querySelector('.c-footer nav');
-    if (!nav) return;
+    if (!nav) {
+        console.warn('Footer nav não encontrado');
+        return;
+    }
 
     var mapaIndice = {
         'tela_acoes_comunitarias.html': 0,
@@ -11,7 +14,10 @@ function configurarFooter() {
 
     var paginaAtual = window.location.pathname.split('/').pop();
     var indice = mapaIndice[paginaAtual];
-    if (indice === undefined) return;
+    if (indice === undefined) {
+        console.warn('Página não mapeada:', paginaAtual);
+        return;
+    }
 
     var links = nav.querySelectorAll('a');
 
@@ -27,28 +33,38 @@ function configurarFooter() {
     pill.setAttribute('aria-hidden', 'true');
     nav.insertAdjacentElement('afterbegin', pill);
 
+    // Usa requestAnimationFrame para garantir que o layout esteja pronto
     requestAnimationFrame(function() {
         var navRect  = nav.getBoundingClientRect();
         var linkRect = links[indice].getBoundingClientRect();
-        var xAtual   = linkRect.left - navRect.left;
-        var xAnterior = parseFloat(sessionStorage.getItem('footer-pill-x'));
 
         // Largura do link + 20px de folga (10px de cada lado)
         var larguraPill = linkRect.width + 20;
-        pill.style.width = larguraPill + 'px';
-        // Ajusta a posição X para manter o pill centralizado sob o link
-        var xAjustado = xAtual - 10; // desloca 10px para a esquerda
-        pill.style.transitionDuration = '0s';
-        pill.style.transform = 'translateX(' + (isNaN(xAnterior) ? xAjustado : xAnterior) + 'px)';
+        var xAtual = linkRect.left - navRect.left - 10; // centraliza
 
+        var xAnterior = parseFloat(sessionStorage.getItem('footer-pill-x'));
+
+        pill.style.width = larguraPill + 'px';
+        pill.style.transitionDuration = '0s';
+        pill.style.transform = 'translateX(' + (isNaN(xAnterior) ? xAtual : xAnterior) + 'px)';
+
+        // Força o reflow
         void pill.offsetHeight;
 
         requestAnimationFrame(function() {
             pill.style.transitionDuration = '';
-            pill.style.transform = 'translateX(' + xAjustado + 'px)';
-            sessionStorage.setItem('footer-pill-x', String(xAjustado));
+            pill.style.transform = 'translateX(' + xAtual + 'px)';
+            sessionStorage.setItem('footer-pill-x', String(xAtual));
         });
     });
 }
 
+// Executa quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', configurarFooter);
+
+// Opcional: reexecuta se a janela for redimensionada (caso o layout mude)
+window.addEventListener('resize', function() {
+    // Pequeno delay para evitar chamadas excessivas
+    clearTimeout(window._footerResizeTimer);
+    window._footerResizeTimer = setTimeout(configurarFooter, 200);
+});
