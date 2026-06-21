@@ -1,7 +1,6 @@
 async function reqCriarEvento(evento) {
   try {
     await apiPost('/api/acoes', evento);
-
     await carregarEventos(); // atualiza tela
   } catch (err) {
     console.error('Erro ao criar evento:', err);
@@ -12,12 +11,10 @@ async function reqCriarEvento(evento) {
 function combineDateAndTime(dateString, timeString) {
   const [year, month, day] = dateString.split('-').map(Number);
   const [hours, minutes] = timeString.split(':').map(Number);
-
   return new Date(year, month - 1, day, hours, minutes);
 }
 
 async function controlarCadastroAvisosEventos(element) {
-  // TODO: algum tipo de cache para /api/me seria interessante
   const usuarioAtual = await apiGet('/api/me', undefined);
 
   const container = document.getElementById("container-principal");
@@ -26,13 +23,12 @@ async function controlarCadastroAvisosEventos(element) {
   const criarAviso = element.querySelector('#criar-aviso');
   const adicionarMobilizadora = element.querySelector('#adicionar-mobilizadora');
   const detalhesEvento = element.querySelector('#detalhes-do-evento');
+  const detalhesAviso = element.querySelector('#detalhes-aviso'); // 🆕
 
   const botaoFechar = element.querySelector('#header-botoes button:last-child');
   const tituloModal = element.querySelector('.header h2');
   const botaoAviso = element.querySelector('#botao-aviso');
   const botaoFooter = element.querySelector('#confirmar-presenca');
-
-
 
   // começa tudo fechado
   container.style.display = 'none';
@@ -41,6 +37,7 @@ async function controlarCadastroAvisosEventos(element) {
   criarAviso.style.display = 'none';
   adicionarMobilizadora.style.display = 'none';
   detalhesEvento.style.display = 'none';
+  if (detalhesAviso) detalhesAviso.style.display = 'none'; // 🆕
 
   window.MEModal = {
     tipo: null,
@@ -57,30 +54,46 @@ async function controlarCadastroAvisosEventos(element) {
     criarAviso.style.display = 'none';
     adicionarMobilizadora.style.display = 'none';
     detalhesEvento.style.display = 'none';
+    if (detalhesAviso) detalhesAviso.style.display = 'none';
 
     document.body.style.overflow = 'hidden';
 
     // título
     if (tituloModal) {
       if (tipo === 'detalhes-evento') tituloModal.innerText = 'Detalhes do Evento';
-      if (tipo === 'criar-evento') tituloModal.innerText = 'Criar Evento';
-      if (tipo === 'criar-aviso') tituloModal.innerText = 'Criar Aviso';
-      if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
+      else if (tipo === 'detalhes-aviso') tituloModal.innerText = 'Detalhes do Aviso';
+      else if (tipo === 'criar-evento') tituloModal.innerText = 'Criar Evento';
+      else if (tipo === 'criar-aviso') tituloModal.innerText = 'Criar Aviso';
+      else if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
     }
 
     // footer button text
     if (botaoFooter) {
-      if (tipo === 'criar-evento') botaoFooter.innerText = 'Criar Evento';
-      if (tipo === 'criar-aviso') botaoFooter.innerText = 'Enviar Aviso';
-      if (tipo === 'adicionar-mobilizadora') botaoFooter.innerText = 'Adicionar Mobilizadora';
+      if (tipo === 'criar-evento') {
+        botaoFooter.innerText = 'Criar Evento';
+        botaoFooter.style.display = 'block';
+      } else if (tipo === 'criar-aviso') {
+        botaoFooter.innerText = 'Enviar Aviso';
+        botaoFooter.style.display = 'block';
+      } else if (tipo === 'adicionar-mobilizadora') {
+        botaoFooter.innerText = 'Adicionar Mobilizadora';
+        botaoFooter.style.display = 'block';
+      } else if (tipo === 'detalhes-aviso') {
+        botaoFooter.style.display = 'none'; // esconde o botão
+      } else if (tipo === 'detalhes-evento') {
+        botaoFooter.style.display = 'block';
+        // o texto será definido abaixo
+      }
     }
 
     // mostrar seção certa
     if (tipo === 'criar-evento') criarEvento.style.display = 'block';
-    if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
-    if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
-    if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
+    else if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
+    else if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
+    else if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
+    else if (tipo === 'detalhes-aviso' && detalhesAviso) detalhesAviso.style.display = 'block';
 
+    // Preencher dados específicos
     if (tipo === 'criar-aviso') {
       const resp = await apiGet('/api/acoes', { responsavel: usuarioAtual.id });
       const sel = document.getElementById("tipo-evento-ja-existente");
@@ -126,9 +139,25 @@ async function controlarCadastroAvisosEventos(element) {
         fecharModal();
       }
     }
+
+    // Preencher detalhes do aviso
+    if (tipo === 'detalhes-aviso' && detalhesAviso) {
+      try {
+        const aviso = window.MEModal.evento;
+        document.getElementById("det-aviso-titulo").innerText = aviso.titulo || 'Sem título';
+        document.getElementById("det-aviso-mensagem").innerText = aviso.mensagem || '';
+        const dataFormatada = aviso.quando || (aviso.sent_at ? formatToLocalDate(aviso.sent_at) : '');
+        document.getElementById("det-aviso-data").innerText = dataFormatada || 'Data não disponível';
+        document.getElementById("det-aviso-remetente").innerText = 'Administração'; // ou algo dinâmico se tiver
+      } catch (error) {
+        console.log(error);
+        mostrar_msg_erro('Não foi possível carregar detalhes do aviso', '' + error);
+        fecharModal();
+      }
+    }
   }
 
-  // para criar um novo evento (página de ações comunitárias)
+  // para criar um novo evento
   const nome_evento = element.querySelector('#nome-evento');
   const tipo_evento = element.querySelector('#tipo-evento');
   const data_evento = element.querySelector('#data');
@@ -136,18 +165,16 @@ async function controlarCadastroAvisosEventos(element) {
   const local_evento = element.querySelector('#local-evento');
   const descricao_evento = element.querySelector('#descricao-novo-evento');
 
-  // para criar novo aviso (página de perfil)
+  // para criar novo aviso
   const evento_escolhido = element.querySelector('#tipo-evento-ja-existente');
   const titulo_aviso_novo = element.querySelector('#titulo-novo-aviso');
   const mensagem_aviso_novo = element.querySelector('#descricao-novo-aviso');
 
-  // para adicionar mobilizadora (página de perfil)
+  // para adicionar mobilizadora
   const telefone_mobilizadora = element.querySelector('#telefone-mobilizadora');
-
 
   tipo_evento.innerHTML = '';
   const res = await apiGet("/api/categories", undefined);
-  console.log(res);
   const categorias = res.data;
   for (let cat of categorias) {
     const opt = document.createElement('option');
@@ -156,10 +183,7 @@ async function controlarCadastroAvisosEventos(element) {
     tipo_evento.appendChild(opt);
   }
 
-
-  // vamos usar o botaoFooter, declarado no começo do documento.
   botaoFooter.addEventListener('click', async () => {
-
     switch (window.MEModal.tipo) {
       case 'criar-evento':
         const novo_evento = {
@@ -186,11 +210,11 @@ async function controlarCadastroAvisosEventos(element) {
           console.log(error);
           mostrar_msg_erro('Não foi possível criar o aviso', '' + error);
         }
-
         break;
 
       case 'adicionar-mobilizadora':
-        const telefone_mobilizadora_value = telefone_mobilizadora.value
+        const telefone_mobilizadora_value = telefone_mobilizadora.value;
+        // TODO
         break;
 
       case 'detalhes-evento':
@@ -201,37 +225,32 @@ async function controlarCadastroAvisosEventos(element) {
           console.log(error);
           mostrar_msg_erro('Não foi possível confirmar a presença', '' + error);
         }
+        break;
 
       default:
         break;
     }
     fecharModal();
-  })
+  });
 
   function fecharModal() {
     container.style.display = 'none';
-
     criarEvento.style.display = 'none';
     criarAviso.style.display = 'none';
     adicionarMobilizadora.style.display = 'none';
     detalhesEvento.style.display = 'none';
+    if (detalhesAviso) detalhesAviso.style.display = 'none';
 
     document.body.style.overflow = 'auto';
     window.MEModal.tipo = null;
     window.MEModal.evento = null;
   }
 
-
-  // BOTÃO X
   if (botaoFechar) {
     botaoFechar.addEventListener('click', fecharModal);
   }
 
-
-
-
   const pagina = window.location.pathname;
-  // ESCONDE O BOTÃO DE AVISO NO MODAL NA TELA DE PERFIL
   if (pagina.includes('tela_meu_perfil')) {
     if (botaoAviso) {
       botaoAviso.style.display = 'none';
@@ -239,6 +258,4 @@ async function controlarCadastroAvisosEventos(element) {
   }
 
   window.ccaeAbrirModal = abrirModal;
-
 }
-

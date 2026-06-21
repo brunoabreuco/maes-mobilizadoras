@@ -14,7 +14,8 @@ async function carregarAvisos() {
       titulo: dat.title,
       mensagem: dat.message,
       imagem: dat.cover_image_url || '/images/icone-mensagem-fundo-verde.png',
-      quando: dat.sent_at ? formatToLocalDate(dat.sent_at) : ''
+      quando: dat.sent_at ? formatToLocalDate(dat.sent_at) : '',
+      sent_at: dat.sent_at // manter para o modal
     });
   }
   const mount = document.getElementById('lista-avisos');
@@ -22,18 +23,25 @@ async function carregarAvisos() {
   for (let aviso of avisos) {
     const comp = await make('componenteAviso', aviso);
     if (aviso.lido) {
-      comp.querySelector('img.novo').style.display = 'none';
+      const bolinha = comp.querySelector('img.novo');
+      if (bolinha) bolinha.style.display = 'none';
     }
     comp.addEventListener('click', function () {
+      // Marca como lido se não estiver
       if (!aviso.lido) {
-        apiPost(`/api/notifications/${aviso.id}/read`, {}).then(() => {
-          setTimeout(() => {
-            carregarAvisos();
-          }, 500);
-        });
+        apiPost(`/api/notifications/${aviso.id}/read`, {})
+          .then(() => {
+            const bolinha = comp.querySelector('img.novo');
+            if (bolinha) bolinha.style.display = 'none';
+            aviso.lido = true;
+          })
+          .catch(err => console.error('Erro ao marcar como lido:', err));
       }
-      if (localStorage.getItem('access_token')) {
-        requestPermissionAndGetToken();
+      // Abre o modal com os detalhes do aviso
+      if (window.ccaeAbrirModal) {
+        window.ccaeAbrirModal('detalhes-aviso', aviso);
+      } else {
+        console.warn('Modal não disponível');
       }
     });
     mount.appendChild(comp);
