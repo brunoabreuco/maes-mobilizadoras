@@ -1,66 +1,81 @@
+// ...existing code...
 function titleCase(s) {
-  // https://www.geeksforgeeks.org/javascript/convert-string-to-title-case-in-javascript/
-  return s.toLowerCase()
+  return (s || '').toLowerCase()
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1) : '')
     .join(' ');
 }
 
 async function loadProfile() {
-  const data = await apiGet('/api/me', undefined);
+  if (typeof showLoading === 'function') showLoading();
+  try {
+    const data = await apiGet('/api/me', undefined);
+    if (!data) return;
 
-  document.getElementById("nome").innerText = data.full_name;
-  document.getElementById("subtitulo").innerText = titleCase(data.role);
-  document.getElementById("numero_eventos_criou").innerText = data.created_events_count;
-  document.getElementById("numero_eventos_participou").innerText = data.participated_events_count;
+    const nomeEl = document.getElementById("nome");
+    const subtEl = document.getElementById("subtitulo");
+    const nCriouEl = document.getElementById("numero_eventos_criou");
+    const nPartEl = document.getElementById("numero_eventos_participou");
 
-  const botaoAviso = document.getElementById("botao_azul");
-  const botaoMobilizadora = document.getElementById("botao_vermelho");
+    if (nomeEl) nomeEl.innerText = data.full_name || '';
+    if (subtEl) subtEl.innerText = titleCase(data.role || '');
+    if (nCriouEl) nCriouEl.innerText = String(data.created_events_count ?? '');
+    if (nPartEl) nPartEl.innerText = String(data.participated_events_count ?? '');
 
-  switch (data.role) {
+    const botaoAviso = document.getElementById("botao_azul");
+    const botaoMobilizadora = document.getElementById("botao_vermelho");
 
-    case "coordenadora":
-      break;
-
-    case "organizadora":
-      if (botaoMobilizadora) {
-        botaoMobilizadora.style.display = "none";
-      }
-      break;
-
-    case "participante":
-      if (botaoAviso) {
-        botaoAviso.style.display = "none";
-      }
-
-      if (botaoMobilizadora) {
-        botaoMobilizadora.style.display = "none";
-      }
-
-      for (let e of document.querySelectorAll('.participante-hide')) {
-        console.log(e);
-        e.style.display = 'none';
-      }
-      break;
+    switch (data.role) {
+      case "coordenadora":
+        break;
+      case "organizadora":
+        if (botaoMobilizadora) botaoMobilizadora.style.display = "none";
+        break;
+      case "participante":
+        if (botaoAviso) botaoAviso.style.display = "none";
+        if (botaoMobilizadora) botaoMobilizadora.style.display = "none";
+        document.querySelectorAll('.participante-hide').forEach(e => { e.style.display = 'none'; });
+        break;
+    }
+  } catch (err) {
+    console.error('Erro ao carregar perfil:', err);
+  } finally {
+    if (typeof hideLoading === 'function') hideLoading();
   }
 }
 
-document.getElementById('texto_sair').addEventListener('click', (evt) => {
-  evt.preventDefault();
-  localStorage.clear();
-  window.location.reload();
+function configurarElementosPerfil() {
+  const sair = document.getElementById('texto_sair');
+  if (sair) {
+    sair.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      localStorage.clear();
+      window.location.reload();
+    });
+  }
+
+  const botaoAzul = document.getElementById('botao_azul');
+  if (botaoAzul) botaoAzul.addEventListener('click', () => ccaeAbrirModal('criar-aviso'));
+
+  const botaoVermelho = document.getElementById('botao_vermelho');
+  if (botaoVermelho) botaoVermelho.addEventListener('click', () => ccaeAbrirModal('adicionar-mobilizadora'));
+}
+
+// Inicialização: esperar componentsReady (como em script-tela-acoes) para garantir header/footer/componentes no DOM
+document.addEventListener('componentsReady', () => {
+  configurarElementosPerfil();
+  loadProfile();
 });
 
-// BOTÃO AZUL
-const botaoAzul = document.getElementById('botao_azul');
-if (botaoAzul) {
-  botaoAzul.addEventListener('click', () => ccaeAbrirModal('criar-aviso'));
-}
-
-// BOTÃO VERMELHO
-const botaoVermelho = document.getElementById('botao_vermelho');
-if (botaoVermelho) {
-  botaoVermelho.addEventListener('click', () => ccaeAbrirModal('adicionar-mobilizadora'));
-}
-
-loadProfile();
+// Fallback: se componentsReady nunca for disparado, garantir inicialização após DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  // se componentsReady já ocorreu, handlers já estarão registrados; caso contrário, registra e chama
+  if (!window.__componentsReadyFired) {
+    // pequena espera para possíveis injeções de componentes síncronas
+    setTimeout(() => {
+      configurarElementosPerfil();
+      loadProfile();
+    }, 50);
+  }
+});
+// ...existing code...

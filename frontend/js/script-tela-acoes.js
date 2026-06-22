@@ -1,14 +1,19 @@
 // 1. BUSCAR EVENTOS DO BACKEND
+
 async function carregarEventos(query) {
   let params = undefined;
   if (query !== undefined) {
     params = { q: query };
   }
+  showLoading();
   try {
     const resp = await apiGet('/api/acoes', params);
     renderizarEventos(resp.data || []);
+    hideLoading();
   } catch (err) {
     console.error('Erro ao buscar eventos:', err);
+    hideLoading();
+    await new Promise(resolve => setTimeout(resolve, 500));
     mostrar_msg_erro('Erro ao buscar eventos:', "" + err);
   }
 }

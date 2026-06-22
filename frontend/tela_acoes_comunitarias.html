@@ -11,19 +11,19 @@
     <link rel="stylesheet" href="./css/style.footer.css">
     <title>Mães Mobilizadoras</title>
   </head>
-  <body style="background-color: #f5ede9" style="position: relative">
+  <body style="background-color: #f5ede9; position: relative; margin: 0; padding: 0;">
     <button style="position: absolute; bottom: 75px; right: 25px; border: none; background-color: transparent; display: none;" id="btn-add-acao"><img src="./images/icone-adicionar-evento.svg" style="width: 58px; height: 58px;"></button>
-    <div>
-      <div data-spec="header" data-prop-titulo="Ações Comunitárias"></div>
+
+    <div id="header" data-spec="header" data-prop-titulo="Ações Comunitárias"></div>
     <div id="lista-acoes" style="margin-top: 155px"></div>
 
     <div id="modal-container" data-spec="componenteCadastroAvisosEventos"></div>
 
     <div id="footer" data-spec="footer"></div>
-    </div>
+ 
     
     <script src="js/api.js"></script>
-    <script src="js/exige-login.js"></script>
+    <script src="js/loading.js"></script>
     <script src="./js/components.js"></script>
     <script src="./js/notifications.js"></script>
     <script src="./js/script-header.js"></script>
