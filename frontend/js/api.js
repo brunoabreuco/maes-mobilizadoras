@@ -31,12 +31,23 @@ async function apiRequest(method, path, body, query_params) {
   let requestOptions = {
     method: method,
     headers: headers,
-  }
+  };
   if (body !== undefined) {
     requestOptions.body = JSON.stringify(body);
   }
   const res = await fetch(`${path}${append}`, requestOptions);
-  const data = await res.json();
+  
+  // 🔹 Verifica se a resposta tem conteúdo antes de parsear JSON
+  const contentLength = res.headers.get('content-length');
+  let data = null;
+  if (contentLength && parseInt(contentLength) > 0) {
+    data = await res.json();
+  } else {
+    // Para respostas sem corpo (ex: 204 No Content), apenas define data como null
+    data = null;
+  }
+  
+  // 🔹 Passa os dados para o tratador de erro (que agora deve lidar com null)
   lidarComErro(res, data);
   return data;
 }
@@ -44,9 +55,9 @@ async function apiRequest(method, path, body, query_params) {
 async function lidarComErro(res, data) {
   if (!res.ok) {
     let erro = 'Erro desconhecido';
-    if (data.error) {
+    if (data && data.error) {
       erro = data.error;
-    } else if (data.errors) {
+    } else if (data && data.errors) {
       erro = '';
       for (let e of data.errors) {
         erro += e;

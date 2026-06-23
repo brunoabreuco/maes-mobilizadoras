@@ -34,10 +34,7 @@ function combineDateAndTime(dateString, timeString) {
 async function controlarCadastroAvisosEventos(element) {
   const usuarioAtual = await apiGet('/api/me', undefined);
 
-  // 🔹 DEFINE A FUNÇÃO GLOBAL O MAIS CEDO POSSÍVEL
   window.ccaeAbrirModal = async function(tipo, evento) {
-    // Esta função será sobrescrita pela versão completa abaixo, mas já está disponível
-    // para evitar erros de "modal não disponível"
     await abrirModal(tipo, evento);
   };
 
@@ -200,6 +197,7 @@ async function controlarCadastroAvisosEventos(element) {
   }
 
   function fecharModal() {
+    console.log('fecharModal chamado');
     container.style.display = 'none';
     if (confirmacaoDelete) confirmacaoDelete.style.display = 'none';
     criarEvento.style.display = 'none';
@@ -225,12 +223,13 @@ async function controlarCadastroAvisosEventos(element) {
   }
 
   function fecharConfirmacao() {
+    console.log('fecharConfirmacao chamado');
     if (confirmacaoDelete) {
       confirmacaoDelete.style.display = 'none';
     }
   }
 
-  // FUNÇÃO DE DELETAR
+  // 🔹 FUNÇÃO DE DELETAR CORRIGIDA
   async function executarDelete() {
     const evt = window.MEModal.evento;
     if (!evt) {
@@ -242,13 +241,15 @@ async function controlarCadastroAvisosEventos(element) {
         await apiDelete(`/api/acoes/${evt.id}`);
         console.log('Evento deletado com sucesso');
         
+        // 🔹 Fecha todos os modais
         fecharModal();
         fecharConfirmacao();
         
+        // 🔹 Aguarda 200ms para garantir que a UI atualizou, depois recarrega
         setTimeout(() => {
             console.log('Recarregando página...');
             window.location.reload();
-        }, 0);
+        }, 200);
         
     } catch (error) {
         console.error('Erro ao deletar evento:', error);
@@ -347,7 +348,6 @@ async function controlarCadastroAvisosEventos(element) {
           }
 
           try {
-              // 1. Buscar usuário pelo telefone
               const searchResult = await apiGet('/admin/users', { phone: phoneValue });
               const users = searchResult.items || [];
 
@@ -420,6 +420,5 @@ async function controlarCadastroAvisosEventos(element) {
     }
   }
 
-  // 🔹 SOBRESCREVE A FUNÇÃO DEFINIDA NO INÍCIO COM A VERSÃO COMPLETA
   window.ccaeAbrirModal = abrirModal;
 }

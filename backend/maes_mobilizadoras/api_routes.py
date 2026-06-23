@@ -228,14 +228,21 @@ def delete_acao(event_id):
         return jsonify({"error": "Sem permissão para remover esta ação"}), 403
 
     try:
-        # Remove manualmente as participações associadas
+        # 🔹 1. Busca todas as notificações associadas ao evento
+        notifications = Notification.query.filter_by(event_id=event_id).all()
+        for notif in notifications:
+            # 🔹 2. Deleta os registros de leitura de cada notificação
+            NotificationRead.query.filter_by(notification_id=notif.id).delete()
+            # 🔹 3. Deleta a notificação
+            db.session.delete(notif)
+
+        # 🔹 4. Deleta as participações do evento
         EventParticipation.query.filter_by(event_id=event_id).delete()
-        # Remove manualmente as notificações associadas (opcional, mas recomendado)
-        Notification.query.filter_by(event_id=event_id).delete()
-        
-        # Agora deleta o evento
+
+        # 🔹 5. Deleta o evento
         db.session.delete(event)
         db.session.commit()
+
     except Exception as e:
         current_app.logger.exception(e)
         db.session.rollback()
