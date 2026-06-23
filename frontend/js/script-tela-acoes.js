@@ -5,7 +5,6 @@ async function carregarEventos(query) {
   if (query !== undefined) {
     params = { q: query };
   }
-  showLoading();
   try {
     const resp = await apiGet('/api/acoes', params);
     renderizarEventos(resp.data || []);
