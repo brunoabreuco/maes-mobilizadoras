@@ -1,7 +1,9 @@
 async function reqCriarEvento(evento) {
   try {
     await apiPost('/api/acoes', evento);
-    await carregarEventos(); // atualiza tela
+    if (typeof carregarEventos === 'function') {
+      await carregarEventos();
+    }
   } catch (err) {
     console.error('Erro ao criar evento:', err);
     mostrar_msg_erro('Erro ao criar evento', "" + err);
@@ -9,15 +11,31 @@ async function reqCriarEvento(evento) {
 }
 
 function combineDateAndTime(dateString, timeString) {
+  if (!dateString || !timeString) {
+    throw new Error('Preencha a data e o horário corretamente.');
+  }
   const [year, month, day] = dateString.split('-').map(Number);
   const [hours, minutes] = timeString.split(':').map(Number);
-  return new Date(year, month - 1, day, hours, minutes);
+  if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
+    throw new Error('Data ou horário inválidos.');
+  }
+  const date = new Date(year, month - 1, day, hours, minutes);
+  if (isNaN(date.getTime())) {
+    throw new Error('Data ou horário inválidos.');
+  }
+  const now = new Date();
+  now.setSeconds(0, 0);
+  if (date < now) {
+    throw new Error('A data e horário devem ser no futuro.');
+  }
+  return date;
 }
 
 async function controlarCadastroAvisosEventos(element) {
   const usuarioAtual = await apiGet('/api/me', undefined);
 
   const container = document.getElementById("container-principal");
+  const confirmacaoDelete = document.getElementById('confirmacao-delete');
 
   const criarEvento = element.querySelector('#criar-evento');
   const criarAviso = element.querySelector('#criar-aviso');
@@ -25,20 +43,26 @@ async function controlarCadastroAvisosEventos(element) {
   const detalhesEvento = element.querySelector('#detalhes-do-evento');
   const detalhesAviso = element.querySelector('#detalhes-aviso');
 
-  const botaoFechar = element.querySelector('#header-botoes button:last-child');
+  const botaoFechar = element.querySelector('#fechar-modal');
+  const botaoDeletar = element.querySelector('#deletar-evento');
   const tituloModal = element.querySelector('.header h2');
   const botaoAviso = element.querySelector('#botao-aviso');
   const botaoFooter = element.querySelector('#confirmar-presenca');
   const hrFooter = document.getElementById('hr-footer');
 
-  // começa tudo fechado
+  const cancelarDelete = document.getElementById('cancelar-delete');
+  const confirmarDelete = document.getElementById('confirmar-delete');
+  const msgDelete = document.getElementById('confirmacao-delete-msg');
+
   container.style.display = 'none';
+  if (confirmacaoDelete) confirmacaoDelete.style.display = 'none';
 
   criarEvento.style.display = 'none';
   criarAviso.style.display = 'none';
   adicionarMobilizadora.style.display = 'none';
   detalhesEvento.style.display = 'none';
   if (detalhesAviso) detalhesAviso.style.display = 'none';
+  if (botaoDeletar) botaoDeletar.style.display = 'none';
 
   window.MEModal = {
     tipo: null,
@@ -50,16 +74,17 @@ async function controlarCadastroAvisosEventos(element) {
     window.MEModal.evento = evento || null;
 
     container.style.display = 'flex';
+    if (confirmacaoDelete) confirmacaoDelete.style.display = 'none';
 
     criarEvento.style.display = 'none';
     criarAviso.style.display = 'none';
     adicionarMobilizadora.style.display = 'none';
     detalhesEvento.style.display = 'none';
     if (detalhesAviso) detalhesAviso.style.display = 'none';
+    if (botaoDeletar) botaoDeletar.style.display = 'none';
 
     document.body.style.overflow = 'hidden';
 
-    // título
     if (tituloModal) {
       if (tipo === 'detalhes-evento') tituloModal.innerText = 'Detalhes do Evento';
       else if (tipo === 'detalhes-aviso') tituloModal.innerText = 'Detalhes do Aviso';
@@ -68,7 +93,6 @@ async function controlarCadastroAvisosEventos(element) {
       else if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
     }
 
-    // footer button text
     if (botaoFooter) {
       if (tipo === 'criar-evento') {
         botaoFooter.innerText = 'Criar Evento';
@@ -85,17 +109,27 @@ async function controlarCadastroAvisosEventos(element) {
       } else if (tipo === 'detalhes-evento') {
         botaoFooter.style.display = 'block';
         if (hrFooter) hrFooter.style.display = 'block';
+        if (botaoDeletar) {
+          const evt = window.MEModal.evento;
+          if (evt) {
+            const isOrganizer = evt.organizer_id === usuarioAtual.id;
+            const isCoordinator = usuarioAtual.role === 'coordenadora';
+            if (isOrganizer || isCoordinator) {
+              botaoDeletar.style.display = 'block';
+            } else {
+              botaoDeletar.style.display = 'none';
+            }
+          }
+        }
       }
     }
 
-    // mostrar seção certa
     if (tipo === 'criar-evento') criarEvento.style.display = 'block';
     else if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
     else if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
     else if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
     else if (tipo === 'detalhes-aviso' && detalhesAviso) detalhesAviso.style.display = 'block';
 
-    // Preencher dados específicos
     if (tipo === 'criar-aviso') {
       const resp = await apiGet('/api/acoes', { responsavel: usuarioAtual.id });
       const sel = document.getElementById("tipo-evento-ja-existente");
@@ -111,7 +145,6 @@ async function controlarCadastroAvisosEventos(element) {
     if (tipo === 'detalhes-evento') {
       try {
         const evt = window.MEModal.evento;
-        // 🔹 FORÇA LOCALE PT-BR
         const dataFmt = new Intl.DateTimeFormat('pt-BR', {
           day: 'numeric',
           month: 'long',
@@ -159,99 +192,190 @@ async function controlarCadastroAvisosEventos(element) {
     }
   }
 
-  // para criar um novo evento (página de ações comunitárias)
-  const nome_evento = element.querySelector('#nome-evento');
-  const tipo_evento = element.querySelector('#tipo-evento');
-  const data_evento = element.querySelector('#data');
-  const horario_evento = element.querySelector('#horario');
-  const local_evento = element.querySelector('#local-evento');
-  const descricao_evento = element.querySelector('#descricao-novo-evento');
-
-  // para criar novo aviso (página de perfil)
-  const evento_escolhido = element.querySelector('#tipo-evento-ja-existente');
-  const titulo_aviso_novo = element.querySelector('#titulo-novo-aviso');
-  const mensagem_aviso_novo = element.querySelector('#descricao-novo-aviso');
-
-  // para adicionar mobilizadora (página de perfil)
-  const telefone_mobilizadora = element.querySelector('#telefone-mobilizadora');
-
-  tipo_evento.innerHTML = '';
-  const res = await apiGet("/api/categories", undefined);
-  const categorias = res.data;
-  for (let cat of categorias) {
-    const opt = document.createElement('option');
-    opt.setAttribute('value', cat.id);
-    opt.innerText = cat.name;
-    tipo_evento.appendChild(opt);
-  }
-
-  botaoFooter.addEventListener('click', async () => {
-    switch (window.MEModal.tipo) {
-      case 'criar-evento':
-        const novo_evento = {
-          title: nome_evento.value,
-          tipo: tipo_evento.value,
-          event_datetime: combineDateAndTime(data_evento.value, horario_evento.value).toISOString(),
-          location_name: local_evento.value,
-          description: descricao_evento.value,
-          organizer_id: usuarioAtual.id,
-          status: 'active',
-          category_id: tipo_evento.value
-        }
-        await reqCriarEvento(novo_evento);
-        window.location.reload();
-        break;
-
-      case 'criar-aviso':
-        try {
-          await apiPost(`/api/acoes/${evento_escolhido.value}/notify`, {
-            title: titulo_aviso_novo.value,
-            message: mensagem_aviso_novo.value
-          });
-        } catch (error) {
-          console.log(error);
-          mostrar_msg_erro('Não foi possível criar o aviso', '' + error);
-        }
-        break;
-
-      case 'adicionar-mobilizadora':
-        const telefone_mobilizadora_value = telefone_mobilizadora.value;
-        // TODO
-        break;
-
-      case 'detalhes-evento':
-        try {
-          await apiPost(`/api/acoes/${window.MEModal.evento.id}/participate`, {});
-          window.location.reload();
-        } catch (error) {
-          console.log(error);
-          mostrar_msg_erro('Não foi possível confirmar a presença', '' + error);
-        }
-        break;
-
-      default:
-        break;
-    }
-    fecharModal();
-  });
-
   function fecharModal() {
     container.style.display = 'none';
+    if (confirmacaoDelete) confirmacaoDelete.style.display = 'none';
     criarEvento.style.display = 'none';
     criarAviso.style.display = 'none';
     adicionarMobilizadora.style.display = 'none';
     detalhesEvento.style.display = 'none';
     if (detalhesAviso) detalhesAviso.style.display = 'none';
     if (hrFooter) hrFooter.style.display = 'block';
+    if (botaoDeletar) botaoDeletar.style.display = 'none';
 
     document.body.style.overflow = 'auto';
     window.MEModal.tipo = null;
     window.MEModal.evento = null;
   }
 
+  function abrirConfirmacao() {
+    const evt = window.MEModal.evento;
+    if (!evt) return;
+    msgDelete.innerText = `Tem certeza que deseja deletar o evento "${evt.title}"? Esta ação não pode ser desfeita.`;
+    if (confirmacaoDelete) {
+      confirmacaoDelete.style.display = 'flex';
+    }
+  }
+
+  function fecharConfirmacao() {
+    if (confirmacaoDelete) {
+      confirmacaoDelete.style.display = 'none';
+    }
+  }
+
+  // FUNÇÃO DE DELETAR
+async function executarDelete() {
+    const evt = window.MEModal.evento;
+    if (!evt) {
+        console.warn('Nenhum evento para deletar');
+        return;
+    }
+    try {
+        console.log('Deletando evento:', evt.id);
+        await apiDelete(`/api/acoes/${evt.id}`);
+        console.log('Evento deletado com sucesso');
+        
+        // Fecha todos os modais
+        fecharModal();
+        fecharConfirmacao();
+        
+        // Força o reload após o modal fechar
+        // Usa setTimeout com 0 para permitir que o evento de clique termine
+        setTimeout(() => {
+            console.log('Recarregando página...');
+            window.location.reload();
+        }, 0);
+        
+    } catch (error) {
+        console.error('Erro ao deletar evento:', error);
+        mostrar_msg_erro('Não foi possível deletar o evento', '' + error);
+        fecharConfirmacao();
+    }
+}
+
   if (botaoFechar) {
     botaoFechar.addEventListener('click', fecharModal);
   }
+
+  if (botaoDeletar) {
+    botaoDeletar.addEventListener('click', abrirConfirmacao);
+  }
+
+  if (cancelarDelete) {
+    cancelarDelete.addEventListener('click', fecharConfirmacao);
+  }
+
+  if (confirmarDelete) {
+    confirmarDelete.addEventListener('click', executarDelete);
+  }
+
+  if (confirmacaoDelete) {
+    confirmacaoDelete.addEventListener('click', function(e) {
+      if (e.target === this) {
+        fecharConfirmacao();
+      }
+    });
+  }
+
+  if (botaoFooter) {
+    botaoFooter.addEventListener('click', async () => {
+      switch (window.MEModal.tipo) {
+        case 'criar-evento': {
+          const nome_evento = document.getElementById('nome-evento');
+          const tipo_evento = document.getElementById('tipo-evento');
+          const data_evento = document.getElementById('data');
+          const horario_evento = document.getElementById('horario');
+          const local_evento = document.getElementById('local-evento');
+          const descricao_evento = document.getElementById('descricao-novo-evento');
+
+          if (!nome_evento.value || !tipo_evento.value || !data_evento.value || !horario_evento.value || !local_evento.value) {
+            mostrar_msg_erro('Preencha todos os campos obrigatórios (Nome, Tipo, Data, Horário e Local).', '');
+            return;
+          }
+
+          try {
+            const dataCombinada = combineDateAndTime(data_evento.value, horario_evento.value);
+            const novo_evento = {
+              title: nome_evento.value,
+              event_datetime: dataCombinada.toISOString(),
+              location_name: local_evento.value,
+              description: descricao_evento.value || '',
+              organizer_id: usuarioAtual.id,
+              status: 'active',
+              category_id: tipo_evento.value
+            };
+            await reqCriarEvento(novo_evento);
+            window.location.reload();
+          } catch (error) {
+            console.error(error);
+            mostrar_msg_erro('Erro ao criar evento', error.message || 'Verifique a data e horário.');
+          }
+          break;
+        }
+
+        case 'criar-aviso': {
+          const evento_escolhido = document.getElementById('tipo-evento-ja-existente');
+          const titulo_aviso = document.getElementById('titulo-novo-aviso');
+          const mensagem_aviso = document.getElementById('descricao-novo-aviso');
+          if (!evento_escolhido.value || !titulo_aviso.value || !mensagem_aviso.value) {
+            mostrar_msg_erro('Preencha todos os campos do aviso.', '');
+            return;
+          }
+          try {
+            await apiPost(`/api/acoes/${evento_escolhido.value}/notify`, {
+              title: titulo_aviso.value,
+              message: mensagem_aviso.value
+            });
+            mostrar_msg_erro('Aviso enviado com sucesso!', '');
+          } catch (error) {
+            console.error(error);
+            mostrar_msg_erro('Não foi possível criar o aviso', '' + error);
+          }
+          break;
+        }
+
+        case 'adicionar-mobilizadora': {
+          const telefone = document.getElementById('telefone-mobilizadora');
+          alert('Funcionalidade em desenvolvimento: ' + telefone.value);
+          break;
+        }
+
+        case 'detalhes-evento': {
+          const evt = window.MEModal.evento;
+          try {
+            await apiPost(`/api/acoes/${evt.id}/participate`, {});
+            window.location.reload();
+          } catch (error) {
+            console.error(error);
+            mostrar_msg_erro('Não foi possível confirmar a presença', '' + error);
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+      fecharModal();
+    });
+  }
+
+  (async function carregarCategorias() {
+    const tipo_evento = document.getElementById('tipo-evento');
+    if (!tipo_evento) return;
+    try {
+      const res = await apiGet("/api/categories");
+      const categorias = res.data || [];
+      tipo_evento.innerHTML = '';
+      for (let cat of categorias) {
+        const opt = document.createElement('option');
+        opt.setAttribute('value', cat.id);
+        opt.innerText = cat.name;
+        tipo_evento.appendChild(opt);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar categorias:', err);
+    }
+  })();
 
   const pagina = window.location.pathname;
   if (pagina.includes('tela_meu_perfil')) {

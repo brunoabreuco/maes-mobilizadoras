@@ -14,7 +14,7 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.45);
-    z-index: 999;
+    z-index: 10001;
     display: none;
 }
 .c-componenteCadastroAvisosEventos #modal {
@@ -29,6 +29,23 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 100px;
+}
+
+/* 🔹 Container do modal de confirmação (sobreposto) */
+.c-componenteCadastroAvisosEventos #confirmacao-delete {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    border-radius: 35px 35px 0 0;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
 }
 
 .c-componenteCadastroAvisosEventos .header {
@@ -65,7 +82,14 @@
     vertical-align: middle;
 }
 
-/* Botão de fechar – apenas escala e leve opacidade */
+.c-componenteCadastroAvisosEventos .btn-deletar {
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.c-componenteCadastroAvisosEventos .btn-deletar:hover {
+    transform: scale(1.1);
+    opacity: 0.7;
+}
+
 .c-componenteCadastroAvisosEventos .btn-fechar {
     transition: transform 0.25s ease, opacity 0.25s ease;
 }
@@ -299,71 +323,48 @@
    AJUSTES ESPECÍFICOS PARA O MODAL DE AVISO (compacto)
    ============================================================ */
 
-/* Reduz padding interno da seção de aviso */
 #detalhes-aviso {
     padding: 8px 16px 12px 16px !important;
 }
-
-/* Reduz espaçamento entre os itens */
 #detalhes-aviso .func_conjunto-detalhes {
     gap: 6px !important;
-    margin-top: 12px !important;
+    margin-top: 8px !important;
     margin-bottom: 4px !important;
 }
-
-/* Reduz tamanho do título */
 #detalhes-aviso h1 {
     font-size: 16px !important;
     line-height: 24px !important;
     margin-bottom: 4px !important;
 }
-
-/* Reduz tamanho da mensagem */
 #detalhes-aviso .func_descricao_evento {
     font-size: 14px !important;
     margin-bottom: 8px !important;
     line-height: 1.4 !important;
 }
-
-/* Reduz espaçamento entre ícone e texto */
 #detalhes-aviso .caixa_info {
     gap: 6px !important;
 }
-
-/* Reduz tamanho dos ícones (opcional, se ainda achar grande) */
 #detalhes-aviso .caixa_info img {
     width: 22px !important;
     height: 22px !important;
 }
-
-/* Reduz tamanho dos textos dentro dos detalhes */
 #detalhes-aviso .texto_grande_preto {
     font-size: 14px !important;
 }
-
 #detalhes-aviso .texto_pequeno_cinza {
     font-size: 12px !important;
 }
 
 /* ============================================================
-   AJUSTE PARA O MODAL DE EVENTO DETALHADO
+   AJUSTE PARA O MODAL DE EVENTO DETALHADO (começar mais acima)
    ============================================================ */
 
-/* Reduz o padding superior da seção de evento */
 #detalhes-do-evento {
-    padding-top: 8px !important;
+    padding-top: 6px !important;
 }
-
-/* Reduz a margem superior do primeiro elemento (tipo do evento) */
 #detalhes-do-evento .func_tipo_evento {
-    margin-top: 6px !important;
+    margin-top: 4px !important;
 }
-
-/* Opcional: reduz o espaçamento entre os itens (se achar necessário) */
 #detalhes-do-evento .func_conjunto-detalhes {
     margin-top: 12px !important;
-}
-
-#detalhes-do-evento .func_tipo_evento {
-    margin-bottom: 6px !important;
 }

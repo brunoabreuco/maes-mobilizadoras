@@ -228,12 +228,18 @@ def delete_acao(event_id):
         return jsonify({"error": "Sem permissão para remover esta ação"}), 403
 
     try:
+        # Remove manualmente as participações associadas
+        EventParticipation.query.filter_by(event_id=event_id).delete()
+        # Remove manualmente as notificações associadas (opcional, mas recomendado)
+        Notification.query.filter_by(event_id=event_id).delete()
+        
+        # Agora deleta o evento
         db.session.delete(event)
         db.session.commit()
     except Exception as e:
         current_app.logger.exception(e)
         db.session.rollback()
-        return jsonify({"error": "Failed to reach database"}), 500
+        return jsonify({"error": "Falha ao deletar evento: " + str(e)}), 500
 
     return "", 204
 
