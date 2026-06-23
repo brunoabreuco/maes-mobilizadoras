@@ -37,7 +37,7 @@ async function apiRequest(method, path, body, query_params) {
   }
   const res = await fetch(`${path}${append}`, requestOptions);
   const data = await res.json();
-  lidarComErro(res, data);
+  await lidarComErro(res, data);
   return data;
 }
 
