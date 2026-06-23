@@ -7,10 +7,25 @@ async function carregarPerfil() {
     document.getElementById('numero_eventos_participou').textContent = data.participated_events_count || 0;
 
     const isParticipante = data.role === 'participante';
+    const isCoordenadora = data.role === 'coordenadora';
+
+    // Oculta/mostra elementos com classe .participante-hide (para participantes)
     const elementosHide = document.querySelectorAll('.participante-hide');
     for (let el of elementosHide) {
       el.style.display = isParticipante ? 'none' : 'block';
     }
+
+    // Botão "Adicionar Mobilizadora" só para coordenadoras
+    const botaoMobilizadora = document.getElementById('botao_vermelho');
+    if (botaoMobilizadora) {
+      botaoMobilizadora.style.display = isCoordenadora ? 'flex' : 'none';
+    }
+
+    // (Opcional) Botão "Enviar Avisos" pode ficar visível para organizadoras e coordenadoras
+    // Mas se quiser esconder para participantes, já está tratado pela classe .participante-hide
+    // Se quiser que apenas coordenadoras possam enviar avisos, pode adicionar lógica similar.
+    // Por enquanto, deixamos como está (aparece para organizadoras e coordenadoras).
+
   } catch (err) {
     console.error('Erro ao carregar perfil:', err);
     mostrar_msg_erro('Erro ao carregar perfil', '' + err);
@@ -82,11 +97,10 @@ function configurarBotoes() {
     });
   }
 
-  // Botão "Sair" – evento no container inteiro (.icone_descricao)
+  // Botão "Sair" – evento no container inteiro (.icone_descricao:last-child)
   const containerSair = document.querySelector('.menu .icone_descricao:last-child');
   if (containerSair) {
     containerSair.addEventListener('click', function(e) {
-      // Impede que o link dentro do container dispare navegação
       e.preventDefault();
       abrirModalLogout();
     });

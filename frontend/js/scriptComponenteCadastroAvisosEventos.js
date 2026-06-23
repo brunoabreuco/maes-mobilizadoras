@@ -1,3 +1,7 @@
+// ============================================================
+// FUNÇÕES AUXILIARES
+// ============================================================
+
 async function reqCriarEvento(evento) {
   try {
     await apiPost('/api/acoes', evento);
@@ -31,6 +35,27 @@ function combineDateAndTime(dateString, timeString) {
   return date;
 }
 
+// Máscara de telefone (formato (XX) XXXXX-XXXX)
+function aplicarMascaraTelefone(input) {
+    let valor = input.value.replace(/\D/g, '');
+    if (valor.length > 11) valor = valor.slice(0, 11);
+    let formatado = '';
+    if (valor.length > 0) {
+        formatado = '(' + valor.slice(0, 2);
+        if (valor.length > 2) {
+            formatado += ') ' + valor.slice(2, 7);
+            if (valor.length > 7) {
+                formatado += '-' + valor.slice(7, 11);
+            }
+        }
+    }
+    input.value = formatado;
+}
+
+// ============================================================
+// CONTROLE PRINCIPAL DO MODAL
+// ============================================================
+
 async function controlarCadastroAvisosEventos(element) {
   const usuarioAtual = await apiGet('/api/me', undefined);
 
@@ -50,13 +75,19 @@ async function controlarCadastroAvisosEventos(element) {
   const botaoFechar = element.querySelector('#fechar-modal');
   const botaoDeletar = element.querySelector('#deletar-evento');
   const tituloModal = element.querySelector('.header h2');
-  const botaoAviso = element.querySelector('#botao-aviso');
   const botaoFooter = element.querySelector('#confirmar-presenca');
   const hrFooter = document.getElementById('hr-footer');
+  const footerDiv = document.getElementById('footer'); // div inteira
 
   const cancelarDelete = document.getElementById('cancelar-delete');
   const confirmarDelete = document.getElementById('confirmar-delete');
-  const msgDelete = document.getElementById('confirmacao-delete-msg');
+  const confirmacaoTitulo = document.getElementById('confirmacao-titulo');
+  const confirmacaoMensagem = document.getElementById('confirmacao-mensagem');
+
+  const listaContainer = document.getElementById('lista-mobilizadoras-container');
+  const nenhumMsg = document.getElementById('nenhuma-mobilizadora');
+  const inputTelefone = document.getElementById('telefone-mobilizadora');
+  const btnAdicionar = document.getElementById('btn-adicionar-mobilizadora');
 
   container.style.display = 'none';
   if (confirmacaoDelete) confirmacaoDelete.style.display = 'none';
@@ -73,6 +104,200 @@ async function controlarCadastroAvisosEventos(element) {
     evento: null
   };
 
+  // ============================================================
+  // FUNÇÃO PARA MODAL DE CONFIRMAÇÃO GENÉRICO (reutilizável)
+  // ============================================================
+  function abrirConfirmacaoGenerica(titulo, mensagem, onConfirm, onCancel) {
+    const modal = document.getElementById('confirmacao-delete');
+    if (!modal) return;
+
+    confirmacaoTitulo.innerText = titulo;
+    confirmacaoMensagem.innerText = mensagem;
+
+    // Remove listeners antigos clonando e substituindo os botões
+    const confirmBtn = document.getElementById('confirmar-delete');
+    const cancelBtn = document.getElementById('cancelar-delete');
+
+    const newConfirm = confirmBtn.cloneNode(true);
+    const newCancel = cancelBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+    // Adiciona novos listeners
+    newConfirm.addEventListener('click', function() {
+      modal.style.display = 'none';
+      if (onConfirm) onConfirm();
+    });
+    newCancel.addEventListener('click', function() {
+      modal.style.display = 'none';
+      if (onCancel) onCancel();
+    });
+
+    // Fecha ao clicar fora
+    modal.onclick = function(e) {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        if (onCancel) onCancel();
+      }
+    };
+
+    modal.style.display = 'flex';
+  }
+
+  // Expor globalmente para uso em outros lugares (se necessário)
+  window.abrirConfirmacaoGenerica = abrirConfirmacaoGenerica;
+
+  // ============================================================
+  // FUNÇÃO PARA CARREGAR A LISTA DE MOBILIZADORAS (APENAS ORGANIZADORAS)
+  // ============================================================
+  async function carregarListaMobilizadoras() {
+    if (!listaContainer) return;
+    try {
+      const resp = await apiGet('/admin/users', { role: 'organizadora' });
+      console.log('Resposta da API (mobilizadoras):', resp);
+      const mobilizadoras = resp.items || [];
+      console.log('Mobilizadoras encontradas:', mobilizadoras.length);
+
+      // Remove apenas os itens adicionados dinamicamente, mantendo a mensagem padrão
+      const children = listaContainer.children;
+      for (let i = children.length - 1; i >= 0; i--) {
+        const child = children[i];
+        if (child.id !== 'nenhuma-mobilizadora') {
+          child.remove();
+        }
+      }
+
+      if (mobilizadoras.length === 0) {
+        if (nenhumMsg) nenhumMsg.style.display = 'block';
+        return;
+      }
+      if (nenhumMsg) nenhumMsg.style.display = 'none';
+
+      for (let mob of mobilizadoras) {
+        const item = document.createElement('div');
+        item.style.cssText = `
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background-color: white;
+          border-radius: 12px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        `;
+        const info = document.createElement('div');
+        info.innerHTML = `<strong>${mob.full_name || 'Sem nome'}</strong> <span style="color: #888; font-size: 14px;">${mob.phone || ''}</span>`;
+        info.style.cssText = 'font-family: "Inter", sans-serif; font-size: 14px;';
+
+        const btnRemover = document.createElement('button');
+        btnRemover.innerText = 'Remover';
+        btnRemover.style.cssText = `
+          background-color: #D35746;
+          border: none;
+          border-radius: 8px;
+          padding: 4px 12px;
+          color: white;
+          font-family: "Inter", sans-serif;
+          font-size: 12px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        `;
+        btnRemover.onmouseover = () => btnRemover.style.backgroundColor = '#b94332';
+        btnRemover.onmouseout = () => btnRemover.style.backgroundColor = '#D35746';
+
+        btnRemover.addEventListener('click', async function(e) {
+          e.stopPropagation();
+          if (mob.id === usuarioAtual.id) {
+            mostrar_msg_erro('Você não pode remover a si mesmo(a) da lista.', '');
+            return;
+          }
+          const titulo = 'Remover mobilizadora';
+          const mensagem = `Deseja remover "${mob.full_name}" (${mob.phone}) da lista de mobilizadoras? Ela voltará a ser participante.`;
+          abrirConfirmacaoGenerica(titulo, mensagem, async function() {
+            try {
+              await apiPatch(`/admin/users/${mob.id}/role`, { role: 'participante' });
+              mostrar_msg_erro('Sucesso', `${mob.full_name} foi rebaixada para participante.`);
+              await carregarListaMobilizadoras();
+            } catch (error) {
+              console.error('Erro ao remover mobilizadora:', error);
+              mostrar_msg_erro('Erro ao remover mobilizadora', error.message || '');
+            }
+          });
+        });
+
+        item.appendChild(info);
+        item.appendChild(btnRemover);
+        listaContainer.appendChild(item);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar mobilizadoras:', error);
+      // Remove itens antigos e mostra erro
+      const children = listaContainer.children;
+      for (let i = children.length - 1; i >= 0; i--) {
+        if (children[i].id !== 'nenhuma-mobilizadora') {
+          children[i].remove();
+        }
+      }
+      if (nenhumMsg) nenhumMsg.style.display = 'none';
+      const errorMsg = document.createElement('p');
+      errorMsg.style.color = '#D35746';
+      errorMsg.style.fontFamily = "'Inter', sans-serif";
+      errorMsg.innerText = 'Erro ao carregar lista.';
+      listaContainer.appendChild(errorMsg);
+    }
+  }
+
+  // ============================================================
+  // FUNÇÃO PARA ADICIONAR MOBILIZADORA POR TELEFONE
+  // ============================================================
+  async function adicionarMobilizadoraPorTelefone(telefone) {
+    const phoneValue = telefone.trim().replace(/\D/g, '');
+    if (phoneValue.length < 10 || phoneValue.length > 11) {
+      mostrar_msg_erro('Erro', 'Telefone inválido. Use DDD + número (ex: 11999999999)');
+      return;
+    }
+
+    // Monta o número no formato internacional (+55 + DDD + número)
+    const phoneInternational = `+55${phoneValue}`;
+
+    try {
+      const searchResult = await apiGet('/admin/users', { phone: phoneInternational });
+      const users = searchResult.items || [];
+
+      if (users.length === 0) {
+        mostrar_msg_erro('Erro', 'Nenhuma usuária encontrada com este telefone.');
+        return;
+      }
+
+      const userToPromote = users[0];
+
+      if (userToPromote.role === 'organizadora' || userToPromote.role === 'coordenadora') {
+        mostrar_msg_erro('Aviso', 'Esta usuária já é mobilizadora (ou coordenadora).');
+        return;
+      }
+
+      const titulo = 'Promover a mobilizadora';
+      const mensagem = `Deseja promover "${userToPromote.full_name}" (${userToPromote.phone}) a mobilizadora?`;
+      abrirConfirmacaoGenerica(titulo, mensagem, async function() {
+        try {
+          await apiPatch(`/admin/users/${userToPromote.id}/role`, { role: 'organizadora' });
+          mostrar_msg_erro('Sucesso', 'Mobilizadora adicionada com sucesso!');
+          await carregarListaMobilizadoras();
+          if (inputTelefone) inputTelefone.value = '';
+        } catch (error) {
+          console.error('Erro ao adicionar mobilizadora:', error);
+          mostrar_msg_erro('Erro', 'Não foi possível adicionar mobilizadora: ' + error.message);
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao adicionar mobilizadora:', error);
+      mostrar_msg_erro('Erro', 'Não foi possível adicionar mobilizadora: ' + error.message);
+    }
+  }
+
+  // ============================================================
+  // ABRIR / FECHAR MODAL
+  // ============================================================
+
   async function abrirModal(tipo, evento) {
     window.MEModal.tipo = tipo;
     window.MEModal.evento = evento || null;
@@ -80,6 +305,7 @@ async function controlarCadastroAvisosEventos(element) {
     container.style.display = 'flex';
     if (confirmacaoDelete) confirmacaoDelete.style.display = 'none';
 
+    // Oculta todas as seções primeiro
     criarEvento.style.display = 'none';
     criarAviso.style.display = 'none';
     adicionarMobilizadora.style.display = 'none';
@@ -87,16 +313,22 @@ async function controlarCadastroAvisosEventos(element) {
     if (detalhesAviso) detalhesAviso.style.display = 'none';
     if (botaoDeletar) botaoDeletar.style.display = 'none';
 
+    // Restaura footer e hr (visíveis por padrão)
+    if (footerDiv) footerDiv.style.display = 'block';
+    if (hrFooter) hrFooter.style.display = 'block';
+
     document.body.style.overflow = 'hidden';
 
+    // Título do modal
     if (tituloModal) {
       if (tipo === 'detalhes-evento') tituloModal.innerText = 'Detalhes do Evento';
       else if (tipo === 'detalhes-aviso') tituloModal.innerText = 'Detalhes do Aviso';
       else if (tipo === 'criar-evento') tituloModal.innerText = 'Criar Evento';
       else if (tipo === 'criar-aviso') tituloModal.innerText = 'Criar Aviso';
-      else if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Adicionar Mobilizadora';
+      else if (tipo === 'adicionar-mobilizadora') tituloModal.innerText = 'Gerenciar Mobilizadoras';
     }
 
+    // Configura o botão do footer (quando visível)
     if (botaoFooter) {
       if (tipo === 'criar-evento') {
         botaoFooter.innerText = 'Criar Evento';
@@ -105,8 +337,10 @@ async function controlarCadastroAvisosEventos(element) {
         botaoFooter.innerText = 'Enviar Aviso';
         botaoFooter.style.display = 'block';
       } else if (tipo === 'adicionar-mobilizadora') {
-        botaoFooter.innerText = 'Adicionar Mobilizadora';
-        botaoFooter.style.display = 'block';
+        // Oculta o footer inteiro e o hr
+        if (footerDiv) footerDiv.style.display = 'none';
+        if (hrFooter) hrFooter.style.display = 'none';
+        botaoFooter.style.display = 'none';
       } else if (tipo === 'detalhes-aviso') {
         botaoFooter.style.display = 'none';
         if (hrFooter) hrFooter.style.display = 'none';
@@ -128,24 +362,27 @@ async function controlarCadastroAvisosEventos(element) {
       }
     }
 
+    // Exibe a seção correspondente
     if (tipo === 'criar-evento') criarEvento.style.display = 'block';
     else if (tipo === 'criar-aviso') criarAviso.style.display = 'block';
-    else if (tipo === 'adicionar-mobilizadora') adicionarMobilizadora.style.display = 'block';
+    else if (tipo === 'adicionar-mobilizadora') {
+      adicionarMobilizadora.style.display = 'block';
+      await carregarListaMobilizadoras();
+      if (inputTelefone) inputTelefone.value = '';
+    }
     else if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
     else if (tipo === 'detalhes-aviso' && detalhesAviso) detalhesAviso.style.display = 'block';
 
-    // RECARREGA OS BOTÕES DE VOZ QUANDO O MODAL DE CRIAÇÃO FOR ABERTO
+    // Recarrega botões de voz (se for criação)
     if (tipo === 'criar-evento' || tipo === 'criar-aviso') {
       setTimeout(() => {
         if (typeof carregarBotoesVoz === 'function') {
-          console.log('Chamando carregarBotoesVoz() após abrir modal de criação');
-          carregarBotoesVoz(5); // passa o número de tentativas
-        } else {
-          console.warn('carregarBotoesVoz não está definida');
+          carregarBotoesVoz(5);
         }
       }, 500);
     }
 
+    // Carrega eventos no select de aviso
     if (tipo === 'criar-aviso') {
       const resp = await apiGet('/api/acoes', { responsavel: usuarioAtual.id });
       const sel = document.getElementById("tipo-evento-ja-existente");
@@ -158,6 +395,7 @@ async function controlarCadastroAvisosEventos(element) {
       }
     }
 
+    // Preenche detalhes do evento
     if (tipo === 'detalhes-evento') {
       try {
         const evt = window.MEModal.evento;
@@ -192,6 +430,7 @@ async function controlarCadastroAvisosEventos(element) {
       }
     }
 
+    // Preenche detalhes do aviso
     if (tipo === 'detalhes-aviso' && detalhesAviso) {
       try {
         const aviso = window.MEModal.evento;
@@ -218,6 +457,7 @@ async function controlarCadastroAvisosEventos(element) {
     detalhesEvento.style.display = 'none';
     if (detalhesAviso) detalhesAviso.style.display = 'none';
     if (hrFooter) hrFooter.style.display = 'block';
+    if (footerDiv) footerDiv.style.display = 'block';
     if (botaoDeletar) botaoDeletar.style.display = 'none';
 
     document.body.style.overflow = 'auto';
@@ -225,74 +465,54 @@ async function controlarCadastroAvisosEventos(element) {
     window.MEModal.evento = null;
   }
 
-  function abrirConfirmacao() {
+  // ============================================================
+  // EVENT LISTENERS
+  // ============================================================
+
+  if (botaoFechar) botaoFechar.addEventListener('click', fecharModal);
+  if (botaoDeletar) botaoDeletar.addEventListener('click', function() {
     const evt = window.MEModal.evento;
     if (!evt) return;
-    msgDelete.innerText = `Tem certeza que deseja deletar o evento "${evt.title}"? Esta ação não pode ser desfeita.`;
-    if (confirmacaoDelete) {
-      confirmacaoDelete.style.display = 'flex';
-    }
-  }
-
-  function fecharConfirmacao() {
-    console.log('fecharConfirmacao chamado');
-    if (confirmacaoDelete) {
-      confirmacaoDelete.style.display = 'none';
-    }
-  }
-
-  // FUNÇÃO DE DELETAR CORRIGIDA
-  async function executarDelete() {
-    const evt = window.MEModal.evento;
-    if (!evt) {
-        console.warn('Nenhum evento para deletar');
-        return;
-    }
-    try {
-        console.log('Deletando evento:', evt.id);
+    const titulo = 'Deletar evento';
+    const mensagem = `Tem certeza que deseja deletar o evento "${evt.title}"? Esta ação não pode ser desfeita.`;
+    abrirConfirmacaoGenerica(titulo, mensagem, async function() {
+      try {
         await apiDelete(`/api/acoes/${evt.id}`);
-        console.log('Evento deletado com sucesso');
-        
-        // Fecha todos os modais
         fecharModal();
-        fecharConfirmacao();
-        
-        // Aguarda 200ms para garantir que a UI atualizou, depois recarrega
-        setTimeout(() => {
-            console.log('Recarregando página...');
-            window.location.reload();
-        }, 200);
-        
-    } catch (error) {
+        setTimeout(() => window.location.reload(), 200);
+      } catch (error) {
         console.error('Erro ao deletar evento:', error);
         mostrar_msg_erro('Não foi possível deletar o evento', '' + error);
-        fecharConfirmacao();
+      }
+    });
+  });
+
+  // Máscara de telefone
+  if (inputTelefone) {
+    inputTelefone.addEventListener('input', function() {
+      aplicarMascaraTelefone(this);
+    });
+  }
+
+  // Botão adicionar mobilizadora
+  if (btnAdicionar) {
+    btnAdicionar.addEventListener('click', async function() {
+      if (!inputTelefone) return;
+      await adicionarMobilizadoraPorTelefone(inputTelefone.value);
+    });
+    if (inputTelefone) {
+      inputTelefone.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          btnAdicionar.click();
+        }
+      });
     }
   }
 
-  if (botaoFechar) {
-    botaoFechar.addEventListener('click', fecharModal);
-  }
-
-  if (botaoDeletar) {
-    botaoDeletar.addEventListener('click', abrirConfirmacao);
-  }
-
-  if (cancelarDelete) {
-    cancelarDelete.addEventListener('click', fecharConfirmacao);
-  }
-
-  if (confirmarDelete) {
-    confirmarDelete.addEventListener('click', executarDelete);
-  }
-
-  if (confirmacaoDelete) {
-    confirmacaoDelete.addEventListener('click', function(e) {
-      if (e.target === this) {
-        fecharConfirmacao();
-      }
-    });
-  }
+  // ============================================================
+  // BOTÃO FOOTER (ações principais)
+  // ============================================================
 
   if (botaoFooter) {
     botaoFooter.addEventListener('click', async () => {
@@ -351,43 +571,6 @@ async function controlarCadastroAvisosEventos(element) {
           break;
         }
 
-        case 'adicionar-mobilizadora': {
-          const telefone = document.getElementById('telefone-mobilizadora');
-          const phoneValue = telefone.value.trim();
-          if (!phoneValue) {
-              mostrar_msg_erro('Erro', 'Por favor, informe o telefone da mobilizadora.');
-              return;
-          }
-
-          try {
-              const searchResult = await apiGet('/admin/users', { phone: phoneValue });
-              const users = searchResult.items || [];
-
-              if (users.length === 0) {
-                  mostrar_msg_erro('Erro', 'Nenhuma usuária encontrada com este telefone.');
-                  return;
-              }
-
-              const userToPromote = users[0];
-              
-              if (userToPromote.role === 'organizadora' || userToPromote.role === 'coordenadora') {
-                  mostrar_msg_erro('Aviso', 'Esta usuária já é mobilizadora (ou coordenadora).');
-                  return;
-              }
-
-              const confirmacao = confirm(`Deseja promover "${userToPromote.full_name}" (${userToPromote.phone}) a mobilizadora?`);
-              if (!confirmacao) return;
-
-              await apiPatch(`/admin/users/${userToPromote.id}/role`, { role: 'organizadora' });
-              mostrar_msg_erro('Sucesso', 'Mobilizadora adicionada com sucesso!');
-              setTimeout(() => window.location.reload(), 500);
-          } catch (error) {
-              console.error('Erro ao adicionar mobilizadora:', error);
-              mostrar_msg_erro('Erro', 'Não foi possível adicionar mobilizadora: ' + error.message);
-          }
-          break;
-        }
-
         case 'detalhes-evento': {
           const evt = window.MEModal.evento;
           try {
@@ -407,6 +590,10 @@ async function controlarCadastroAvisosEventos(element) {
     });
   }
 
+  // ============================================================
+  // CARREGAR CATEGORIAS
+  // ============================================================
+
   (async function carregarCategorias() {
     const tipo_evento = document.getElementById('tipo-evento');
     if (!tipo_evento) return;
@@ -424,13 +611,6 @@ async function controlarCadastroAvisosEventos(element) {
       console.error('Erro ao carregar categorias:', err);
     }
   })();
-
-  const pagina = window.location.pathname;
-  if (pagina.includes('tela_meu_perfil')) {
-    if (botaoAviso) {
-      botaoAviso.style.display = 'none';
-    }
-  }
 
   window.ccaeAbrirModal = abrirModal;
 }

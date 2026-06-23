@@ -368,3 +368,21 @@
 #detalhes-do-evento .func_conjunto-detalhes {
     margin-top: 12px !important;
 }
+
+/* Estilos para a lista de mobilizadoras */
+#lista-mobilizadoras {
+    margin: 16px 0 8px 0;
+}
+#container-mobilizadoras {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 8px;
+    background-color: #faf8f7;
+}
+#container-mobilizadoras p {
+    margin: 0;
+}
+
+#confirmacao-delete {
+    border-radius: 0 !important;
+}
