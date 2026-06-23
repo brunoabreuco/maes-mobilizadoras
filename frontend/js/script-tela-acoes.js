@@ -8,14 +8,12 @@ async function carregarEventos(query) {
   try {
     const resp = await apiGet('/api/acoes', params);
     renderizarEventos(resp.data || []);
-    hideLoading();
   } catch (err) {
     console.error('Erro ao buscar eventos:', err);
-    hideLoading();
     await new Promise(resolve => setTimeout(resolve, 500));
     mostrar_msg_erro('Erro ao buscar eventos:', "" + err);
   } finally {
-    // 🔹 OCULTA LOADING APÓS A REQUISIÇÃO (SUCESSO OU ERRO)
+    // OCULTA LOADING APÓS A REQUISIÇÃO (SUCESSO OU ERRO)
     ocultarLoading();
   }
 }
@@ -81,7 +79,7 @@ async function configurarElementos() {
   barraPesquisa.addEventListener('input', handler);
 }
 
-// 🔹 FUNÇÃO PARA OCULTAR LOADING
+// FUNÇÃO PARA OCULTAR LOADING
 function ocultarLoading() {
   const loadingScreen = document.getElementById('loading-screen');
   if (loadingScreen) {

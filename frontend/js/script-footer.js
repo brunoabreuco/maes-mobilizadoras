@@ -36,7 +36,7 @@ function configurarFooter() {
     pill.setAttribute('aria-hidden', 'true');
     nav.insertAdjacentElement('afterbegin', pill);
 
-    // 🔹 DELAY DE 100ms PARA GARANTIR LAYOUT ESTÁVEL
+    // DELAY DE 100ms PARA GARANTIR LAYOUT ESTÁVEL
     setTimeout(function() {
         requestAnimationFrame(function() {
             var navRect  = nav.getBoundingClientRect();

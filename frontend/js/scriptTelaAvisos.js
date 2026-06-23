@@ -47,11 +47,11 @@ async function carregarAvisos() {
     });
     mount.appendChild(comp);
   }
-  // 🔹 OCULTA LOADING APÓS RENDERIZAR
+  // OCULTA LOADING APÓS RENDERIZAR
   ocultarLoading();
 }
 
-// 🔹 FUNÇÃO PARA OCULTAR LOADING
+// FUNÇÃO PARA OCULTAR LOADING
 function ocultarLoading() {
   const loadingScreen = document.getElementById('loading-screen');
   if (loadingScreen) {

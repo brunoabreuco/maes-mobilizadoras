@@ -38,13 +38,11 @@ function setProps(element, props) {
   const it = element.querySelectorAll('*');
 
   for (let el of it) {
-    // Define o conteúdo de texto baseado em data-prop
     if (el.hasAttribute('data-prop')) {
       let propName = el.getAttribute('data-prop');
       el.innerText = props[propName];
     }
 
-    // Define atributos baseados em data-attr-
     for (let attr of el.attributes) {
       if (attr.name.startsWith('data-attr-')) {
         let attrName = attr.name.replace('data-attr-', '');
@@ -72,10 +70,6 @@ async function make(spec, props) {
     configurarHeader(element);
   }
 
-  if (spec === 'componenteCadastroAvisosEventos' && typeof controlarCadastroAvisosEventos === 'function') {
-    controlarCadastroAvisosEventos(element);
-  }
-
   return element;
 }
 
@@ -98,6 +92,14 @@ async function loadAllComponents() {
     const p = make(spec, props).then(el => {
       element.innerHTML = '';
       element.appendChild(el);
+
+      if (spec === 'componenteCadastroAvisosEventos' && typeof controlarCadastroAvisosEventos === 'function') {
+        return controlarCadastroAvisosEventos(el).then(() => {
+          if (typeof carregarBotoesVoz === 'function') {
+            setTimeout(() => carregarBotoesVoz(5), 500);
+          }
+        });
+      }
 
       if (spec === 'footer' && typeof configurarFooter === 'function') {
         configurarFooter();

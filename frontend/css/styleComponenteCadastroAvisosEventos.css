@@ -31,7 +31,7 @@
     padding-bottom: 100px;
 }
 
-/* 🔹 Container do modal de confirmação (sobreposto) */
+/* Container do modal de confirmação (sobreposto) */
 .c-componenteCadastroAvisosEventos #confirmacao-delete {
     position: absolute;
     top: 0;

@@ -31,23 +31,12 @@ async function apiRequest(method, path, body, query_params) {
   let requestOptions = {
     method: method,
     headers: headers,
-  };
+  }
   if (body !== undefined) {
     requestOptions.body = JSON.stringify(body);
   }
   const res = await fetch(`${path}${append}`, requestOptions);
-  
-  // 🔹 Verifica se a resposta tem conteúdo antes de parsear JSON
-  const contentLength = res.headers.get('content-length');
-  let data = null;
-  if (contentLength && parseInt(contentLength) > 0) {
-    data = await res.json();
-  } else {
-    // Para respostas sem corpo (ex: 204 No Content), apenas define data como null
-    data = null;
-  }
-  
-  // 🔹 Passa os dados para o tratador de erro (que agora deve lidar com null)
+  const data = await res.json();
   lidarComErro(res, data);
   return data;
 }
@@ -55,9 +44,9 @@ async function apiRequest(method, path, body, query_params) {
 async function lidarComErro(res, data) {
   if (!res.ok) {
     let erro = 'Erro desconhecido';
-    if (data && data.error) {
+    if (data.error) {
       erro = data.error;
-    } else if (data && data.errors) {
+    } else if (data.errors) {
       erro = '';
       for (let e of data.errors) {
         erro += e;
@@ -93,7 +82,6 @@ function dateTimeParseUTC(isoString) {
   return date;
 }
 
-// Função única para formatar data/hora completa em pt-BR (24h)
 function formatToLocalDateTime(isoString) {
   const date = dateTimeParseUTC(isoString);
   return new Intl.DateTimeFormat('pt-BR', {
@@ -106,7 +94,6 @@ function formatToLocalDateTime(isoString) {
   }).format(date);
 }
 
-// Função para formatar apenas a data (curta) em pt-BR
 function formatToLocalDate(isoString) {
   const date = dateTimeParseUTC(isoString);
   return new Intl.DateTimeFormat('pt-BR', {
@@ -117,16 +104,28 @@ function formatToLocalDate(isoString) {
 }
 
 // ============================================================
-// UTILITÁRIOS DE UI
+// FUNÇÃO PARA OCULTAR O LOADING (INLINE)
 // ============================================================
 
-// criar mensagem de erro (overlay fixo)
+function ocultarLoading() {
+  const loadingScreen = document.getElementById('loading-screen');
+  if (loadingScreen) {
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+    }, 500);
+  }
+}
+window.ocultarLoading = ocultarLoading;
+
+// ============================================================
+// UTILITÁRIOS DE UI – ERRO
+// ============================================================
+
 function mostrar_msg_erro(a, b) {
-  // Remove qualquer erro anterior
   const anterior = document.getElementById('tela_escura_erro');
   if (anterior) anterior.remove();
 
-  // Impede rolagem da página
   document.body.style.overflow = 'hidden';
 
   const fundo = document.createElement('div');
@@ -202,11 +201,9 @@ function mostrar_msg_erro(a, b) {
   const botao_ok = document.getElementById('botao_erro_ok');
   botao_ok.addEventListener('click', () => {
     fundo.remove();
-    // Restaura a rolagem
     document.body.style.overflow = '';
   });
 
-  // Fechar ao clicar fora da caixa (opcional)
   fundo.addEventListener('click', (e) => {
     if (e.target === fundo) {
       fundo.remove();

@@ -134,6 +134,18 @@ async function controlarCadastroAvisosEventos(element) {
     else if (tipo === 'detalhes-evento') detalhesEvento.style.display = 'block';
     else if (tipo === 'detalhes-aviso' && detalhesAviso) detalhesAviso.style.display = 'block';
 
+    // RECARREGA OS BOTÕES DE VOZ QUANDO O MODAL DE CRIAÇÃO FOR ABERTO
+    if (tipo === 'criar-evento' || tipo === 'criar-aviso') {
+      setTimeout(() => {
+        if (typeof carregarBotoesVoz === 'function') {
+          console.log('Chamando carregarBotoesVoz() após abrir modal de criação');
+          carregarBotoesVoz(5); // passa o número de tentativas
+        } else {
+          console.warn('carregarBotoesVoz não está definida');
+        }
+      }, 500);
+    }
+
     if (tipo === 'criar-aviso') {
       const resp = await apiGet('/api/acoes', { responsavel: usuarioAtual.id });
       const sel = document.getElementById("tipo-evento-ja-existente");
@@ -229,7 +241,7 @@ async function controlarCadastroAvisosEventos(element) {
     }
   }
 
-  // 🔹 FUNÇÃO DE DELETAR CORRIGIDA
+  // FUNÇÃO DE DELETAR CORRIGIDA
   async function executarDelete() {
     const evt = window.MEModal.evento;
     if (!evt) {
@@ -241,11 +253,11 @@ async function controlarCadastroAvisosEventos(element) {
         await apiDelete(`/api/acoes/${evt.id}`);
         console.log('Evento deletado com sucesso');
         
-        // 🔹 Fecha todos os modais
+        // Fecha todos os modais
         fecharModal();
         fecharConfirmacao();
         
-        // 🔹 Aguarda 200ms para garantir que a UI atualizou, depois recarrega
+        // Aguarda 200ms para garantir que a UI atualizou, depois recarrega
         setTimeout(() => {
             console.log('Recarregando página...');
             window.location.reload();

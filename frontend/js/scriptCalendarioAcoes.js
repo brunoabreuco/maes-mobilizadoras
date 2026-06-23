@@ -9,7 +9,7 @@ async function reqGetEventos() {
   }
 }
 
-// 🔹 FUNÇÃO PARA OCULTAR LOADING
+// FUNÇÃO PARA OCULTAR LOADING
 function ocultarLoading() {
   const loadingScreen = document.getElementById('loading-screen');
   if (loadingScreen) {
@@ -142,7 +142,7 @@ async function iniciarCalendario() {
   updateCalendar();
   await updateNextEvents();
   
-  // 🔹 OCULTA LOADING APÓS TUDO CARREGADO
+  // OCULTA LOADING APÓS TUDO CARREGADO
   ocultarLoading();
 }
 

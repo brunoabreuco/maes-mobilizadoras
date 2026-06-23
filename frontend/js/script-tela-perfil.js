@@ -82,7 +82,7 @@ function configurarBotoes() {
     });
   }
 
-  // 🔹 Botão "Sair" – evento no container inteiro (.icone_descricao)
+  // Botão "Sair" – evento no container inteiro (.icone_descricao)
   const containerSair = document.querySelector('.menu .icone_descricao:last-child');
   if (containerSair) {
     containerSair.addEventListener('click', function(e) {
