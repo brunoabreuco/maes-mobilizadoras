@@ -34,6 +34,13 @@ function combineDateAndTime(dateString, timeString) {
 async function controlarCadastroAvisosEventos(element) {
   const usuarioAtual = await apiGet('/api/me', undefined);
 
+  // 🔹 DEFINE A FUNÇÃO GLOBAL O MAIS CEDO POSSÍVEL
+  window.ccaeAbrirModal = async function(tipo, evento) {
+    // Esta função será sobrescrita pela versão completa abaixo, mas já está disponível
+    // para evitar erros de "modal não disponível"
+    await abrirModal(tipo, evento);
+  };
+
   const container = document.getElementById("container-principal");
   const confirmacaoDelete = document.getElementById('confirmacao-delete');
 
@@ -224,7 +231,7 @@ async function controlarCadastroAvisosEventos(element) {
   }
 
   // FUNÇÃO DE DELETAR
-async function executarDelete() {
+  async function executarDelete() {
     const evt = window.MEModal.evento;
     if (!evt) {
         console.warn('Nenhum evento para deletar');
@@ -235,12 +242,9 @@ async function executarDelete() {
         await apiDelete(`/api/acoes/${evt.id}`);
         console.log('Evento deletado com sucesso');
         
-        // Fecha todos os modais
         fecharModal();
         fecharConfirmacao();
         
-        // Força o reload após o modal fechar
-        // Usa setTimeout com 0 para permitir que o evento de clique termine
         setTimeout(() => {
             console.log('Recarregando página...');
             window.location.reload();
@@ -251,7 +255,7 @@ async function executarDelete() {
         mostrar_msg_erro('Não foi possível deletar o evento', '' + error);
         fecharConfirmacao();
     }
-}
+  }
 
   if (botaoFechar) {
     botaoFechar.addEventListener('click', fecharModal);
@@ -336,7 +340,39 @@ async function executarDelete() {
 
         case 'adicionar-mobilizadora': {
           const telefone = document.getElementById('telefone-mobilizadora');
-          alert('Funcionalidade em desenvolvimento: ' + telefone.value);
+          const phoneValue = telefone.value.trim();
+          if (!phoneValue) {
+              mostrar_msg_erro('Erro', 'Por favor, informe o telefone da mobilizadora.');
+              return;
+          }
+
+          try {
+              // 1. Buscar usuário pelo telefone
+              const searchResult = await apiGet('/admin/users', { phone: phoneValue });
+              const users = searchResult.items || [];
+
+              if (users.length === 0) {
+                  mostrar_msg_erro('Erro', 'Nenhuma usuária encontrada com este telefone.');
+                  return;
+              }
+
+              const userToPromote = users[0];
+              
+              if (userToPromote.role === 'organizadora' || userToPromote.role === 'coordenadora') {
+                  mostrar_msg_erro('Aviso', 'Esta usuária já é mobilizadora (ou coordenadora).');
+                  return;
+              }
+
+              const confirmacao = confirm(`Deseja promover "${userToPromote.full_name}" (${userToPromote.phone}) a mobilizadora?`);
+              if (!confirmacao) return;
+
+              await apiPatch(`/admin/users/${userToPromote.id}/role`, { role: 'organizadora' });
+              mostrar_msg_erro('Sucesso', 'Mobilizadora adicionada com sucesso!');
+              setTimeout(() => window.location.reload(), 500);
+          } catch (error) {
+              console.error('Erro ao adicionar mobilizadora:', error);
+              mostrar_msg_erro('Erro', 'Não foi possível adicionar mobilizadora: ' + error.message);
+          }
           break;
         }
 
@@ -384,5 +420,6 @@ async function executarDelete() {
     }
   }
 
+  // 🔹 SOBRESCREVE A FUNÇÃO DEFINIDA NO INÍCIO COM A VERSÃO COMPLETA
   window.ccaeAbrirModal = abrirModal;
 }

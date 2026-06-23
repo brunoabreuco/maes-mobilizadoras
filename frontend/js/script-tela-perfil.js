@@ -36,6 +36,68 @@ function ocultarLoading() {
   }
 }
 
+// 🔹 FUNÇÃO DE LOGOUT
+function logout() {
+  if (confirm('Tem certeza que deseja sair?')) {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = 'tela-cadastro.html';
+  }
+}
+
+// 🔹 CONFIGURA OS BOTÕES DA PÁGINA (COM FALLBACK)
+function configurarBotoes() {
+  // Botão "Enviar Avisos"
+  const botaoAvisos = document.getElementById('botao_azul');
+  if (botaoAvisos) {
+    botaoAvisos.addEventListener('click', function() {
+      if (window.ccaeAbrirModal) {
+        window.ccaeAbrirModal('criar-aviso', null);
+      } else {
+        console.warn('Modal ainda não disponível, tentando novamente em 500ms...');
+        // Fallback: espera o modal ser carregado
+        setTimeout(() => {
+          if (window.ccaeAbrirModal) {
+            window.ccaeAbrirModal('criar-aviso', null);
+          } else {
+            mostrar_msg_erro('Erro', 'Modal não disponível. Tente recarregar a página.');
+          }
+        }, 500);
+      }
+    });
+  }
+
+  // Botão "Adicionar Mobilizadora"
+  const botaoMobilizadora = document.getElementById('botao_vermelho');
+  if (botaoMobilizadora) {
+    botaoMobilizadora.addEventListener('click', function() {
+      if (window.ccaeAbrirModal) {
+        window.ccaeAbrirModal('adicionar-mobilizadora', null);
+      } else {
+        console.warn('Modal ainda não disponível, tentando novamente em 500ms...');
+        setTimeout(() => {
+          if (window.ccaeAbrirModal) {
+            window.ccaeAbrirModal('adicionar-mobilizadora', null);
+          } else {
+            mostrar_msg_erro('Erro', 'Modal não disponível. Tente recarregar a página.');
+          }
+        }, 500);
+      }
+    });
+  }
+
+  // Botão "Sair"
+  const botaoSair = document.getElementById('texto_sair');
+  if (botaoSair) {
+    botaoSair.addEventListener('click', function(e) {
+      e.preventDefault();
+      logout();
+    });
+  }
+}
+
+// Inicialização
 document.addEventListener('componentsReady', () => {
   carregarPerfil();
+  configurarBotoes();
 });
