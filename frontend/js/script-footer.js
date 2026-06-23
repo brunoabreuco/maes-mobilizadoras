@@ -1,7 +1,10 @@
 function configurarFooter() {
     var nav = document.querySelector('.c-footer nav');
     if (!nav) {
-        console.warn('Footer nav não encontrado');
+        document.addEventListener('componentsReady', function handler() {
+            document.removeEventListener('componentsReady', handler);
+            configurarFooter();
+        });
         return;
     }
 
@@ -33,38 +36,29 @@ function configurarFooter() {
     pill.setAttribute('aria-hidden', 'true');
     nav.insertAdjacentElement('afterbegin', pill);
 
-    // Usa requestAnimationFrame para garantir que o layout esteja pronto
-    requestAnimationFrame(function() {
-        var navRect  = nav.getBoundingClientRect();
-        var linkRect = links[indice].getBoundingClientRect();
-
-        // Largura do link + 20px de folga (10px de cada lado)
-        var larguraPill = linkRect.width + 20;
-        var xAtual = linkRect.left - navRect.left - 10; // centraliza
-
-        var xAnterior = parseFloat(sessionStorage.getItem('footer-pill-x'));
-
-        pill.style.width = larguraPill + 'px';
-        pill.style.transitionDuration = '0s';
-        pill.style.transform = 'translateX(' + (isNaN(xAnterior) ? xAtual : xAnterior) + 'px)';
-
-        // Força o reflow
-        void pill.offsetHeight;
-
+    // 🔹 DELAY DE 100ms PARA GARANTIR LAYOUT ESTÁVEL
+    setTimeout(function() {
         requestAnimationFrame(function() {
-            pill.style.transitionDuration = '';
-            pill.style.transform = 'translateX(' + xAtual + 'px)';
-            sessionStorage.setItem('footer-pill-x', String(xAtual));
+            var navRect  = nav.getBoundingClientRect();
+            var linkRect = links[indice].getBoundingClientRect();
+            var larguraPill = linkRect.width + 20;
+            var xAtual = linkRect.left - navRect.left - 10;
+            var xAnterior = parseFloat(sessionStorage.getItem('footer-pill-x'));
+
+            pill.style.width = larguraPill + 'px';
+            pill.style.transitionDuration = '0s';
+            pill.style.transform = 'translateX(' + (isNaN(xAnterior) ? xAtual : xAnterior) + 'px)';
+
+            void pill.offsetHeight;
+
+            requestAnimationFrame(function() {
+                pill.style.transitionDuration = '';
+                pill.style.transform = 'translateX(' + xAtual + 'px)';
+                sessionStorage.setItem('footer-pill-x', String(xAtual));
+            });
         });
-    });
+    }, 100);
 }
 
-// Executa quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', configurarFooter);
-
-// Opcional: reexecuta se a janela for redimensionada (caso o layout mude)
-window.addEventListener('resize', function() {
-    // Pequeno delay para evitar chamadas excessivas
-    clearTimeout(window._footerResizeTimer);
-    window._footerResizeTimer = setTimeout(configurarFooter, 200);
-});
+document.addEventListener('componentsReady', configurarFooter);

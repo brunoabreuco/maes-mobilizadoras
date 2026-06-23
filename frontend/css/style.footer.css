@@ -11,6 +11,7 @@
     bottom: 0;
     left: 0;
     width: 100%;
+    z-index: 10000; /* 🔹 Acima da tela de loading */
 }
 
 .c-footer hr {
@@ -36,7 +37,6 @@
     z-index: 1;
 }
 
-/* Hover nos ícones: escala e escurece */
 .c-footer a:not(.nav-active) img {
     transition: filter 0.2s ease, transform 0.2s ease;
 }
@@ -44,8 +44,6 @@
     filter: brightness(0.6);
     transform: scale(1.1);
 }
-
-/* Hover no texto: escurece */
 .c-footer a:not(.nav-active) span {
     transition: color 0.2s ease;
 }
@@ -58,24 +56,20 @@
     height: 15.58px;
     margin-bottom: 0.67px;
 }
-
 .c-footer .calendario {
     width: 14px;
     height: 16px;
     margin-bottom: 0.25px;
 }
-
 .c-footer .avisos {
     width: 13.33px;
     height: 16.25px;
 }
-
 .c-footer .perfil {
     width: 14.67px;
     height: 14.67px;
     margin-bottom: 1.58px;
 }
-
 .c-footer span {
     margin-top: 4px;
     font-size: 11px;
@@ -83,7 +77,6 @@
     color: #6E6F70;
 }
 
-/* Pill de navegação */
 .c-footer .nav-pill {
     position: absolute;
     top: 4px;
@@ -103,12 +96,9 @@
     }
 }
 
-/* Ícone ativo → branco (já existente) */
 .c-footer a.nav-active img {
     filter: brightness(0) invert(1);
 }
-
-/* Texto ativo → branco (já existente) */
 .c-footer a.nav-active span {
     color: #ffffff;
     font-weight: 600;

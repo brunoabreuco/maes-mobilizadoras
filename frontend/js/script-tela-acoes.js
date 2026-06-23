@@ -10,6 +10,9 @@ async function carregarEventos(query) {
   } catch (err) {
     console.error('Erro ao buscar eventos:', err);
     mostrar_msg_erro('Erro ao buscar eventos:', "" + err);
+  } finally {
+    // 🔹 OCULTA LOADING APÓS A REQUISIÇÃO (SUCESSO OU ERRO)
+    ocultarLoading();
   }
 }
 
@@ -34,7 +37,6 @@ async function renderizarEventos(eventos) {
       dia: diaFmt.format(date),
       titulo: evento.title,
       tipo: evento.category_name || '',
-      // 🔹 Agora usa formatToLocalDateTime para exibir data/hora completa em pt-BR
       hora: formatToLocalDateTime(evento.event_datetime),
       local: evento.location_name,
       confirmados: "" + evento.participant_count,
@@ -73,6 +75,17 @@ async function configurarElementos() {
   };
   barraPesquisa.addEventListener('keyup', handler);
   barraPesquisa.addEventListener('input', handler);
+}
+
+// 🔹 FUNÇÃO PARA OCULTAR LOADING
+function ocultarLoading() {
+  const loadingScreen = document.getElementById('loading-screen');
+  if (loadingScreen) {
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+    }, 500);
+  }
 }
 
 // 4. INICIALIZAÇÃO DA PÁGINA

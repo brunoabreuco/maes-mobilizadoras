@@ -4,6 +4,7 @@ async function carregarAvisos() {
     resp = await apiGet('/api/notifications');
   } catch (error) {
     mostrar_msg_erro('Erro ao carregar os avisos', '' + error);
+    ocultarLoading();
     return;
   }
   let avisos = [];
@@ -45,6 +46,19 @@ async function carregarAvisos() {
       }
     });
     mount.appendChild(comp);
+  }
+  // 🔹 OCULTA LOADING APÓS RENDERIZAR
+  ocultarLoading();
+}
+
+// 🔹 FUNÇÃO PARA OCULTAR LOADING
+function ocultarLoading() {
+  const loadingScreen = document.getElementById('loading-screen');
+  if (loadingScreen) {
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+    }, 500);
   }
 }
 

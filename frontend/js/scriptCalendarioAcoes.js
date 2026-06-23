@@ -1,12 +1,22 @@
 async function reqGetEventos() {
   try {
-    // 🔹 Filtra apenas eventos confirmados pelo usuário
     const res = await apiGet('/api/acoes', { participating: true });
     return res.data;
   } catch (err) {
     console.error('Erro ao buscar eventos:', err);
     mostrar_msg_erro('Erro ao buscar eventos:', "" + err);
     return [];
+  }
+}
+
+// 🔹 FUNÇÃO PARA OCULTAR LOADING
+function ocultarLoading() {
+  const loadingScreen = document.getElementById('loading-screen');
+  if (loadingScreen) {
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+    }, 500);
   }
 }
 
@@ -86,21 +96,18 @@ async function iniciarCalendario() {
     const mount = document.getElementById('proximos-eventos');
     mount.innerHTML = '';
 
-    // Ordena os eventos por data (do mais próximo ao mais distante)
     const eventosOrdenados = [...eventos].sort((a, b) => {
       const dateA = new Date(a.event_datetime);
       const dateB = new Date(b.event_datetime);
       return dateA - dateB;
     });
 
-    // Renderiza cada evento
     for (let evt of eventosOrdenados) {
       const el = await make('componenteproximosEventos', {
         data: formatToLocalDate(evt.event_datetime),
         desc: evt.title
       });
 
-      // 🔹 Adiciona evento de clique para abrir o modal de detalhes
       el.addEventListener('click', () => {
         if (window.ccaeAbrirModal) {
           window.ccaeAbrirModal('detalhes-evento', evt);
@@ -134,6 +141,9 @@ async function iniciarCalendario() {
 
   updateCalendar();
   await updateNextEvents();
+  
+  // 🔹 OCULTA LOADING APÓS TUDO CARREGADO
+  ocultarLoading();
 }
 
 // Aguarda o modal ser carregado antes de iniciar o calendário
