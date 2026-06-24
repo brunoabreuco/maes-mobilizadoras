@@ -1,0 +1,126 @@
+/* styleComponenteBotaoVoz.css */
+
+/* Container do botão (ocupa apenas o espaço necessário) */
+[data-spec="componenteBotaoVoz"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+    /* Para não quebrar o layout em telas pequenas */
+}
+
+/* Botão de voz */
+.btn-voz {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+    color: #00636A;
+    width: 36px;
+    height: 36px;
+}
+
+.btn-voz:hover {
+    background-color: rgba(0, 99, 106, 0.1);
+    transform: scale(1.05);
+}
+
+.btn-voz:active {
+    transform: scale(0.95);
+}
+
+.btn-voz svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+}
+
+/* Estado "ouvindo" – microfone ativo */
+.btn-voz.ouvindo {
+    background-color: rgba(211, 87, 70, 0.15);
+    color: #d32f2f;
+    animation: pulse-voz 1s infinite;
+}
+
+.btn-voz.ouvindo svg {
+    stroke: #d32f2f;
+}
+
+/* Animação de pulsação enquanto grava */
+@keyframes pulse-voz {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Ajuste para campos de texto ao lado do botão */
+.input-com-icone {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.input-com-icone input,
+.input-com-icone textarea {
+    flex: 1;
+    min-width: 200px; /* Evita que o campo fique muito pequeno */
+}
+
+.input-com-icone [data-spec="componenteBotaoVoz"] {
+    margin-left: 8px;
+    display: inline-flex;
+}
+
+/* Para telas muito pequenas, o botão pode quebrar para a linha de baixo */
+@media (max-width: 480px) {
+    .input-com-icone {
+        flex-wrap: wrap;
+    }
+    .input-com-icone [data-spec="componenteBotaoVoz"] {
+        margin-left: 0;
+        margin-top: 4px;
+        align-self: flex-start;
+    }
+}
+
+/* Garante que o label fique em cima e o input + botão fiquem lado a lado */
+.input-com-icone {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+}
+.input-com-icone label {
+    width: 100%;
+    flex: 0 0 100%;
+    margin-bottom: 4px;
+}
+.input-com-icone input,
+.input-com-icone textarea {
+    flex: 1;
+    min-width: 150px; /* ou o valor que preferir */
+}
+.input-com-icone [data-spec="componenteBotaoVoz"] {
+    flex: 0 0 auto;
+    margin-left: 8px;
+}
+/* Esconde os <br> desnecessários dentro do .input-com-icone */
+.input-com-icone br {
+    display: none;
+}

@@ -1,0 +1,265 @@
+<div id="container-principal">
+    <div id="modal">
+        <div class="header">
+            <h2>Detalhes do evento</h2>
+            <div id="header-botoes">
+                <!-- Botão deletar -->
+                <button class="btn-deletar" id="deletar-evento" style="display: none;">
+                    <img src="./images/icone-lixeira.svg" alt="Deletar evento">
+                </button>
+                <button class="btn-fechar" id="fechar-modal">
+                    <img src="./images/close_X.svg" alt="Fechar">
+                </button>
+            </div>
+        </div>
+
+        <!-- DETALHES DO EVENTO -->
+        <div id="detalhes-do-evento" class="func_detalhes-do-evento">
+            <span id="det-tipo-evento" class="func_tipo_evento"></span>
+            <h1 id="det-titulo-evento"></h1>
+            <span id="det-descricao-evento" class="func_descricao_evento"></span>
+
+            <div id="det-conjunto-detalhes" class="func_conjunto-detalhes">
+                <div class="caixa_info">
+                    <img src="./images/icone-verde-claro-calendario.svg">
+                    <div class="dois_textos_info">
+                        <h3 class="texto-grande-preto" id="det-data-evento"></h3>
+                        <span class="texto_pequeno_cinza" id="det-horario-evento"></span>
+                    </div>
+                </div>
+
+                <div class="caixa_info">
+                    <img src="./images/icone-verde-claro-pin.svg">
+                    <div class="dois_textos_info">
+                        <h3 class="texto_grande_preto">Local</h3>
+                        <span class="texto_pequeno_cinza" id="det-endereco-evento"></span>
+                    </div>
+                </div>
+
+                <div class="caixa_info">
+                    <img src="./images/icone-verde-claro-pessoa.svg">
+                    <div class="dois_textos_info">
+                        <h3 class="texto_grande_preto">Organizado por</h3>
+                        <span class="texto_pequeno_cinza" id="det-organizadora"></span>
+                    </div>
+                </div>
+
+                <div class="caixa_info">
+                    <img src="./images/icone-verde-claro-duas-pessoas.svg">
+                    <div class="dois_textos_info">
+                        <h3 class="texto_grande_preto">Participantes</h3>
+                        <span class="texto_pequeno_cinza"><span id="det-numero-pessoas-confirmadas"></span> pessoa(s) confirmada(s)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETALHES DO AVISO -->
+        <div id="detalhes-aviso" class="func_detalhes-do-evento" style="display:none;">
+            <h1 id="det-aviso-titulo"></h1>
+            <span id="det-aviso-mensagem" class="func_descricao_evento"></span>
+
+            <div class="func_conjunto-detalhes">
+                <div class="caixa_info">
+                    <img src="./images/icone-relogio.svg">
+                    <div>
+                        <h3 class="texto_grande_preto">Enviado em</h3>
+                        <span class="texto_pequeno_cinza" id="det-aviso-data"></span>
+                    </div>
+                </div>
+                <div class="caixa_info">
+                    <img src="./images/icone-duas-pessoas.svg">
+                    <div>
+                        <h3 class="texto_grande_preto">Remetente</h3>
+                        <span class="texto_pequeno_cinza" id="det-aviso-remetente">Administração</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CRIAR EVENTO -->
+        <div id="criar-evento">
+            <form>
+                <fieldset>
+                    <label for="nome-evento">Nome do Evento *</label><br>
+                    <div class="input-com-icone">
+                        <input type="text" id="nome-evento" placeholder="Ex: Reunião do Conselho" required>
+                        <div data-spec="componenteBotaoVoz" data-prop-target="nome-evento"></div>
+                    </div>
+                    <br>
+
+                    <label for="tipo-evento">Tipo de Evento *</label><br>
+                    <select id="tipo-evento" name="tipo-evento" required></select>
+                    <br>
+
+                    <div id="data-horario">
+                        <div>
+                            <label for="data">Data *</label><br>
+                            <input class="input-preto" type="date" id="data" required>
+                            <br>
+                        </div>
+                        <div>
+                            <label for="horario">Horário *</label><br>
+                            <input class="input-preto" id="horario" type="time" step="60" value="12:00" required>
+                            <br>
+                        </div>
+                    </div>
+
+                    <label for="local-evento">Local *</label><br>
+                    <div class="input-com-icone">
+                        <input type="text" id="local-evento" placeholder="Ex: Centro Comunitário" required>
+                        <div data-spec="componenteBotaoVoz" data-prop-target="local-evento"></div>
+                    </div>
+                    <br>
+
+                    <label for="descricao-novo-evento">Descrição</label><br>
+                    <div class="input-com-icone">
+                        <textarea id="descricao-novo-evento" placeholder="Descreva o evento..." cols="100" rows="6"></textarea>
+                        <div data-spec="componenteBotaoVoz" data-prop-target="descricao-novo-evento"></div>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+
+        <!-- CRIAR AVISO -->
+        <div id="criar-aviso">
+            <fieldset>
+                <label for="selecionar-evento">Selecione o Evento</label><br>
+                <select id="tipo-evento-ja-existente" name="selecionar-evento" required></select>
+
+                <div class="titulo-aviso">
+                    <label for="titulo-aviso">Título do Aviso</label>
+                    <div class="input-com-icone">
+                        <input type="text" id="titulo-novo-aviso" placeholder="Lembrete"/>
+                        <div data-spec="componenteBotaoVoz" data-prop-target="titulo-novo-aviso"></div>
+                    </div>
+                </div>
+
+                <label for="msg-aviso">Corpo do Aviso</label>
+                <div class="msg-aviso">
+                    <div class="input-com-icone">
+                        <textarea id="descricao-novo-aviso" placeholder="Ex: Lembrete importante! Não esqueça de trazer seus materiais..." cols="100" rows="6"></textarea>
+                        <div data-spec="componenteBotaoVoz" data-prop-target="descricao-novo-aviso"></div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        <!-- ADICIONAR MOBILIZADORA -->
+        <div id="adicionar-mobilizadora">
+            <div id="caixa-vermelha">
+                <p><span>Atenção:</span> Esta pessoa receberá permissões para criar eventos e enviar avisos para a comunidade.</p>
+            </div>
+
+            <!-- Lista de mobilizadoras atuais -->
+            <div id="lista-mobilizadoras" style="margin: 16px 0;">
+                <h4 style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 16px; color: #1a1a1a; margin-bottom: 12px;">
+                    Mobilizadoras atuais
+                </h4>
+                <div id="lista-mobilizadoras-container" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- itens serão inseridos via JS -->
+                    <p style="color: #888; font-family: 'Inter', sans-serif; font-size: 14px;" id="nenhuma-mobilizadora">
+                        Nenhuma mobilizadora encontrada.
+                    </p>
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 16px 0;">
+
+            <!-- Adicionar nova mobilizadora -->
+            <label for="telefone-mobilizadora">Adicionar por telefone (com DDD)</label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                <div style="flex: 1;">
+                    <input id="telefone-mobilizadora" type="tel" placeholder="(11) 99999-9999" style="width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #ccc; font-size: 16px;">
+                </div>
+                <button id="btn-adicionar-mobilizadora" style="
+                    background-color: #00636A;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 10px 20px;
+                    color: white;
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 600;
+                    font-size: 14px;
+                    cursor: pointer;
+                    white-space: nowrap;
+                    transition: background-color 0.2s;
+                "
+                onmouseover="this.style.backgroundColor='#004d52'"
+                onmouseout="this.style.backgroundColor='#00636A'"
+                >Adicionar</button>
+            </div>
+            <p style="font-size: 12px; color: #888; margin-top: 4px;">Será enviado um código de verificação por SMS</p>
+        </div>
+
+        <hr id="hr-footer">
+        <div id="footer">
+            <button id="confirmar-presenca">Confirmar Presença</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO GENÉRICO -->
+    <div id="confirmacao-delete" style="
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        border-radius: 0 !important;
+    ">
+        <div style="
+            background-color: #F5EDE9;
+            padding: 30px 24px;
+            border-radius: 20px;
+            max-width: 320px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        ">
+            <h3 id="confirmacao-titulo" style="
+                font-family: 'Inter', sans-serif;
+                font-weight: 600;
+                font-size: 18px;
+                margin-bottom: 12px;
+                color: #1a1a1a;
+            ">Deletar evento</h3>
+            <p id="confirmacao-mensagem" style="
+                font-family: 'Inter', sans-serif;
+                font-weight: 400;
+                font-size: 15px;
+                color: #3E3F41;
+                margin-bottom: 24px;
+            ">Tem certeza que deseja deletar este evento? Esta ação não pode ser desfeita.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancelar-delete" style="
+                    background-color: transparent;
+                    border: 1px solid #CFCFCF;
+                    border-radius: 12px;
+                    padding: 10px 24px;
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 500;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                ">Cancelar</button>
+                <button id="confirmar-delete" style="
+                    background-color: #D35746;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 10px 24px;
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 500;
+                    font-size: 14px;
+                    color: white;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                ">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>

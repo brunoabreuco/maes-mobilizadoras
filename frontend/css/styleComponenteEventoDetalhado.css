@@ -1,0 +1,91 @@
+.c-componenteEventoDetalhado * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
+}
+
+.c-componenteEventoDetalhado .conteudo {
+    display: flex;
+    flex-direction: row;
+    padding: 7px 22px 7px 22px;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+    border-radius: 8px; /* para arredondar o hover */
+    cursor: pointer;
+}
+.c-componenteEventoDetalhado .conteudo:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.c-componenteEventoDetalhado .data {
+    background-color: #CCE0E2;
+    width: 35px;
+    height: 35px;
+    border-radius: 11px;
+    font-size: 16px;
+    font-weight: 500;
+    color:#00636A;
+    text-align: center;
+    line-height: 12px;
+}
+.c-componenteEventoDetalhado .data .mes {
+    font-size: 8px;
+}
+.c-componenteEventoDetalhado .classificacoes {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    margin-bottom: 3px;
+}
+.c-componenteEventoDetalhado .classificacao {
+    border-radius: 11px;
+    font-size: 0.67rem;
+    font-weight: 500;
+    text-align: center;
+    margin-right: 4px;
+    padding: 2px 6px 2px 6px;
+}
+.c-componenteEventoDetalhado .tipo_evento {
+    display: block;
+    background-color: #CCE0E2;
+    color: #00636A;
+    line-height: 14px;;
+}
+.c-componenteEventoDetalhado .confirmado {
+    display: block;
+    background-color: #F8DDDA;
+    color: #D35746;
+    line-height: 14px;;
+}
+.c-componenteEventoDetalhado h1 {
+    font-size: 15px;
+    font-weight: 500;
+}
+.c-componenteEventoDetalhado .icon_info {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 9px;
+    gap: 2px;
+}
+.c-componenteEventoDetalhado img {
+    width: 15px;
+    height: 15px;
+}
+.c-componenteEventoDetalhado .info {
+    font-size: 0.87rem;
+    color: #303050;
+}
+.c-componenteEventoDetalhado .quem_organizou {
+    font-size: 0.6rem;
+    color: #404060;
+    margin-top: 5px;
+}
+.c-componenteEventoDetalhado hr {
+    width: 100%;
+    height: 1px;
+    border: none;
+    background-color: #CFCFCF;
+}
