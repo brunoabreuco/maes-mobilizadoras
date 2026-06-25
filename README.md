@@ -1,9 +1,13 @@
-# Aplicativo Mães-Mobilizadoras
-## Um aplicativo de organização com funções de cadastramento de eventos e emissão de notificações dos mesmos.
-[![Last commit](https://img.shields.io/github/last-commit/brunoabreuco/maes-mobilizadoras)]
-[![Issues](https://img.shields.io/github/issues/brunoabreuco/maes-mobilizadoras)]
-[![Top language](https://img.shields.io/github/languages/top/brunoabreuco/maes-mobilizadoras)]
-[![Repo size](https://img.shields.io/github/repo-size/brunoabreuco/maes-mobilizadoras)]
+# <div align="center"> Aplicativo MaMobi </div>
+
+## Uma plataforma de organização de eventos comunitários com suporte a notificações.
+
+<div align="center">
+
+[![Last commit](https://img.shields.io/github/last-commit/brunoabreuco/maes-mobilizadoras)](https://github.com/brunoabreuco/maes-mobilizadoras/commits)
+[![Issues](https://img.shields.io/github/issues/brunoabreuco/maes-mobilizadoras)](https://github.com/brunoabreuco/maes-mobilizadoras/issues)
+[![Top language](https://img.shields.io/github/languages/top/brunoabreuco/maes-mobilizadoras)](https://github.com/brunoabreuco/maes-mobilizadoras)
+[![Repo size](https://img.shields.io/github/repo-size/brunoabreuco/maes-mobilizadoras)](https://github.com/brunoabreuco/maes-mobilizadoras)
 
 ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
@@ -16,97 +20,109 @@
 ![Pydantic](https://img.shields.io/badge/pydantic-%23E92063.svg?style=for-the-badge&logo=pydantic&logoColor=white)
 ![Pytest](https://img.shields.io/badge/pytest-%23ffffff.svg?style=for-the-badge&logo=pytest&logoColor=2f9fe3)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Selenium](https://img.shields.io/badge/-selenium-%43B02A?style=for-the-badge&logo=selenium&logoColor=white)
 
-### Público-alvo
-As mães mobilizadoras são uma equipe de mulheres que oferecem serviços e auxílio geral para gestantes e mães do distrito de Parelheiros, no extremo sul da cidade de São Paulo. Este aplicativo foi designado para servir como portal de comunicação principal entre elas e as consumidoras de seus serviços.
+</div>
+
+---
+
+### Sobre o projeto
+
+Este WebApp é uma plataforma de gestão de ações comunitárias, desenvolvida como projeto de extensão universitária pela UNIFESP. O desenvolvimento foi inspirado nas Mães Mobilizadoras de Parelheiros, extremo sul de São Paulo, e os requisitos foram levantados a partir das informações públicas disponíveis em [Cuidados - IBEAC](https://ibeac.org.br/nossa-atuacao/cuidados/)
+
+As Mães Mobilizadoras são um coletivo de mulheres residentes em seis bairros da região (Barragem, Colônia, Jardim Silveira, Nova América, São Norberto e Vargem Grande) que mobilizam a comunidade para o cuidado com gestantes e a primeira infância. O grupo atua sob supervisão do [IBEAC (Instituto Brasileiro de Estudos e Apoio Comunitário)](http://www.ibeac.org.br), ONG presente em Parelheiros desde 2008, em parceria com o CPCD (Centro Popular de Cultura e Desenvolvimento).
+
+Embora tenha sido concebido a partir dessa realidade, o aplicativo não é exclusivo para esse grupo e pode ser adaptado para outras organizações comunitárias.
+
+---
 
 ### Funcionalidades-Chave
-- um calendário com marcações coloridas correspondentes às datas dos eventos cuja presença foi confirmada pelo usuário.
-- uma lista de todas as ações comunitárias cadastradas até o momento e suas informações detalhadas, com as opções de confirmar ou cancelar participação;
-- uma tela exclusiva para notificações relevantes, como novas ações e lembretes;
-- uma tela de perfil com as estatísticas de participação do usuário.
 
-O aplicativo conta com diferentes funcionalidades dependendo da identidade da pessoa cadastrada. Caso ela faça parte da associação, ela também pode:
-- criar novos eventos (nome, tipo de evento, data, horário, local e descrição);
-- enviar notificações e atualizações dos eventos;
-- caso seja coordenadora, conceder status de mobilizadora para uma usuária comum, liberando as funcionalidades mencionadas acima.
+- Calendário com marcações coloridas correspondentes às datas dos eventos cuja presença foi confirmada pelo usuário.
+- Lista de todas as ações comunitárias cadastradas e suas informações detalhadas, com opções de confirmar ou cancelar participação.
+- Tela exclusiva para notificações relevantes, como novas ações e lembretes.
+- Tela de perfil com as estatísticas de participação do usuário.
 
-...existing code...
+O aplicativo conta com funcionalidades adicionais para membros da associação:
 
-### Guia de Instalação
+- Criar novos eventos (nome, tipo, data, horário, local e descrição).
+- Enviar notificações e atualizações dos eventos.
+- Coordenadoras podem conceder status de organizadora para uma usuária comum, liberando as funcionalidades acima.
 
-1) Pré-requisitos
-- Python (veja `backend/README.md` para versão recomendada).
-- git.
-- Opcional: Docker/Docker Compose.
+---
 
-2) Clonar o repositório
+### Acesso
+
+O aplicativo representa um protótipo. O acesso é restrito:
+
+- **Google OAuth2:** apenas contas com domínio `@unifesp.br`.
+- **OTP SMS (Twilio):** apenas números de telefone previamente cadastrados na plataforma.
+
+---
+
+### Guia de Instalação (ambiente local)
+
+#### Pré-requisitos
+
+- Python (veja `backend/README.md` para a versão recomendada)
+- git
+
+#### 1. Clonar o repositório
+
 ```sh
 git clone https://github.com/brunoabreuco/maes-mobilizadoras.git
 cd maes-mobilizadoras
 ```
 
-3) Backend — ambiente virtual e dependências
+#### 2. Instalar dependências
+
 ```sh
 cd backend
-python -m venv .venv
-source .venv/bin/activate    # Linux/macOS
+uv venv
 
-pip install --upgrade pip
-pip install -r requirements.txt
+source .venv/bin/activate      # Linux/macOS
+.venv\Scripts\activate       # Windows
+
+uv sync
 ```
-(Arquivo usado: `backend/requirements.txt`)
 
-4) Variáveis de ambiente
-- Copie o exemplo e edite:
+> `requirements.txt` também está disponível, mas é usado apenas para o deploy no Render.
+
+#### 3. Variáveis de ambiente
+
+Copie o arquivo de exemplo e preencha com os valores do projeto:
+
 ```sh
 cp .env.example .env
 ```
-- Variáveis principais:
-  - DATABASE_URL — string de conexão do banco (por padrão pode usar sqlite em `instance/app.db`).
-  - JWT_SECRET — chave secreta para tokens.
-  - FIREBASE_SERVICE_ACCOUNT_JSON — JSON do service account (se usar Firebase).
-  - AUTO_MIGRATE — `true` para criar tabelas e seed em dev.
 
-Veja `backend/.env.example` e a inicialização em `backend/maes_mobilizadoras/app_factory.py`.
+As variáveis necessárias estão documentadas em `backend/.env.example`. Você vai precisar das credenciais do Supabase, Firebase e Twilio — solicite ao time caso não as tenha.
 
-5) Rodar em desenvolvimento
-Opção A — Flask CLI:
-```sh
-export FLASK_APP=app.py
-export FLASK_ENV=development   # opcional
-python -m flask run
-```
-Opção B — executar diretamente:
+#### 4. Rodar localmente
+
 ```sh
 cd backend
-python app.py
+flask run
 ```
-- O backend expõe a API e serve o frontend estático (padrão).
 
-6) Frontend
-- A interface está em `frontend/`. Você pode:
-  - Abrir diretamente `frontend/tela-cadastro.html` no navegador, ou
-  - Rodar o backend e acessar a rota raiz para que o Flask sirva a página.
+O backend sobe a API e serve o frontend estático. Acesse `http://localhost:5000` (ou a porta configurada).
 
-7) Testes
+#### 5. Testes
+
 ```sh
 cd backend
 source .venv/bin/activate
 pytest
 ```
-(Os testes estão em `backend/tests`.)
 
-8) Produção (breve)
-- Use um servidor WSGI (ex.: gunicorn) e configure variáveis de ambiente adequadas:
+Os testes estão em `backend/tests/`.
+
+#### 6. Deploy (produção)
+
+Use um servidor WSGI como gunicorn:
+
 ```sh
 cd backend
 gunicorn -w 4 -b 0.0.0.0:8000 app:app
 ```
-- Garanta `JWT_SECRET` seguro e um banco de produção configurado em `DATABASE_URL`.
 
-9) Dicas e resolução de problemas
-- Se usar Firebase, confirme a validade de `FIREBASE_SERVICE_ACCOUNT_JSON`.
-- Se AUTO_MIGRATE falhar, verifique permissões no diretório `instance/` e o valor de `DATABASE_URL`.
-- Logs do Flask mostram inicialização e erros de configuração.
+Certifique-se de que todas as variáveis de ambiente de produção estão configuradas corretamente antes de subir.
