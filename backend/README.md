@@ -1,4 +1,4 @@
-# Backend Mães Mobilizadoras
+# Backend MaMobi
 
 ## Configuração
 
@@ -7,7 +7,7 @@ Primeiramente, instale *uv*, uma alternativa ao gerenciador de pacotes padrão *
 ```bash
 cd backend
 uv venv --python 3.14 .venv
-source .venv/bin/activate  # (ou .\venv\Scripts\activate no Windows)
+source .venv/bin/activate  # (ou .\.venv\Scripts\activate no Windows)
 ```
 
 ## Execução
@@ -15,6 +15,6 @@ source .venv/bin/activate  # (ou .\venv\Scripts\activate no Windows)
 No diretório do backend, ative o *virtualenv* se não estiver ativo e, então, execute a ferramenta *flask*.
 ```bash
 cd backend
-source .venv/bin/activate  # (ou .\venv\Scripts\activate no Windows)
+source .venv/bin/activate  # (ou .\.venv\Scripts\activate no Windows)
 python -m flask run
 ```
