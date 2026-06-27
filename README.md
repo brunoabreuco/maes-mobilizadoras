@@ -48,6 +48,12 @@ O aplicativo conta com funcionalidades adicionais para membros da associação:
 - Enviar notificações e atualizações dos eventos.
 - Coordenadoras podem conceder status de organizadora para uma usuária comum, liberando as funcionalidades acima.
 
+<div align="center">
+  <img src="docs/assets/demo1.gif" width="30%"/>
+  <img src="docs/assets/demo2.gif" width="30%"/>
+  <img src="docs/assets/demo3.gif" width="30%"/>
+</div>
+
 ---
 
 ### Acesso
