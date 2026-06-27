@@ -47,10 +47,11 @@ O aplicativo conta com funcionalidades adicionais para membros da associação:
 - Criar novos eventos (nome, tipo, data, horário, local e descrição).
 - Enviar notificações e atualizações dos eventos.
 - Coordenadoras podem conceder status de organizadora para uma usuária comum, liberando as funcionalidades acima.
-
 <div align="center">
   <img src="docs/assets/demo1.gif" width="30%"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="docs/assets/demo2.gif" width="30%"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="docs/assets/demo3.gif" width="30%"/>
 </div>
 
